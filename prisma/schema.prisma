@@ -1,0 +1,157 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum OrderStatus {
+  PENDING_PAYMENT
+  PAID
+  PREPARING
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  EXPIRED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  INITIATED
+  PAID
+  FAILED
+  REFUNDED
+}
+
+// All money is stored as integer kobo (1 NGN = 100 kobo). Never floats.
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String?
+  email     String?  @unique
+  phone     String?  @unique // normalised: 234XXXXXXXXXX
+  createdAt DateTime @default(now())
+  orders    Order[]
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  slug        String      @unique
+  name        String
+  description String?
+  category    String?
+  imageUrl    String?
+  priceKobo   Int
+  unit        String      @default("kg") // kg, pack, piece
+  packSizeG   Int? // grams per pack, if sold by pack
+  stockQty    Int         @default(0)
+  active      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  items       OrderItem[]
+
+  @@index([active, category])
+}
+
+model DeliveryZone {
+  id           String  @id @default(cuid())
+  name         String  @unique // e.g. "Lekki", "Ikeja"
+  feeKobo      Int
+  freeOverKobo Int? // free delivery above this subtotal, optional
+  active       Boolean @default(true)
+  orders       Order[]
+}
+
+model DeliverySlot {
+  id          String  @id @default(cuid())
+  label       String // "9am - 12pm"
+  startMinute Int // minutes from midnight, Lagos time
+  endMinute   Int
+  maxOrders   Int // capacity per day for this slot
+  active      Boolean @default(true)
+  orders      Order[]
+}
+
+model Order {
+  id         String      @id @default(cuid())
+  reference  String      @unique // public, e.g. FG-9F3A...
+  status     OrderStatus @default(PENDING_PAYMENT)
+  customerId String?
+  customer   Customer?   @relation(fields: [customerId], references: [id])
+
+  contactName  String
+  contactEmail String
+  contactPhone String
+  addressLine  String
+  landmark     String?
+  notes        String?
+
+  zoneId       String
+  zone         DeliveryZone @relation(fields: [zoneId], references: [id])
+  slotId       String
+  slot         DeliverySlot @relation(fields: [slotId], references: [id])
+  deliveryDate String // YYYY-MM-DD, Lagos local date
+
+  subtotalKobo    Int
+  deliveryFeeKobo Int
+  totalKobo       Int
+
+  expiresAt DateTime // unpaid orders release stock after this
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  items    OrderItem[]
+  payments Payment[]
+
+  @@index([status, expiresAt])
+  @@index([deliveryDate, slotId])
+  @@index([customerId, createdAt])
+  @@index([contactPhone])
+}
+
+model OrderItem {
+  id            String  @id @default(cuid())
+  orderId       String
+  order         Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId     String
+  product       Product @relation(fields: [productId], references: [id])
+  nameSnapshot  String
+  unitPriceKobo Int
+  quantity      Int
+
+  @@index([orderId])
+  @@index([productId])
+}
+
+model Payment {
+  id          String        @id @default(cuid())
+  orderId     String
+  order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  provider    String        @default("monnify")
+  reference   String        @unique // our paymentReference
+  providerRef String? // Monnify transactionReference
+  amountKobo  Int
+  status      PaymentStatus @default(INITIATED)
+  method      String?
+  raw         Json?
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([orderId])
+}
+
+model OtpCode {
+  id         String    @id @default(cuid())
+  phone      String
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone, createdAt])
+}
