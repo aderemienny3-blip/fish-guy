@@ -5,7 +5,7 @@ generator client {
 datasource db {
   provider  = "postgresql"
   url       = env("DATABASE_URL")
-    directUrl = env("DATABASE_URL_UNPOOLED")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 enum OrderStatus {
@@ -154,4 +154,42 @@ model OtpCode {
   createdAt  DateTime  @default(now())
 
   @@index([phone, createdAt])
+}
+
+// ---------- Admin dashboard ----------
+
+enum AdminRole {
+  OWNER
+  MANAGER
+  PACKER
+  RIDER
+}
+
+model AdminUser {
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String
+  role         AdminRole
+  passwordHash String
+  active       Boolean   @default(true)
+  failedLogins Int       @default(0)
+  lockedUntil  DateTime?
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+// Single row (id = 1). Hours are minutes from midnight, Lagos time.
+model StoreSettings {
+  id                     Int      @id @default(1)
+  openMinute             Int      @default(510) // 8:30 AM
+  closeMinute            Int      @default(1260) // 9:00 PM
+  lowStockThreshold      Int      @default(5)
+  superBuyerMinOrders    Int      @default(5)
+  superBuyerWindowDays   Int      @default(90)
+  superBuyerMinSpendKobo Int      @default(0) // 0 = ignore spend rule
+  loyalMinOrders         Int      @default(3)
+  newCustomerDays        Int      @default(30)
+  atRiskDays             Int      @default(45)
+  lostDays               Int      @default(90)
+  updatedAt              DateTime @updatedAt
 }
