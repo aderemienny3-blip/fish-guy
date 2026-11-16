@@ -193,3 +193,121 @@ model StoreSettings {
   lostDays               Int      @default(90)
   updatedAt              DateTime @updatedAt
 }
+// ---- FISH GUY SOUNDS: paste this block at the END of prisma/schema.prisma ----
+
+enum MusicOrderStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Artist {
+  id         String   @id @default(cuid())
+  slug       String   @unique
+  name       String
+  bio        String?
+  imageUrl   String?
+  bannerUrl  String?
+  email      String?
+  isFeatured Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  tracks     Track[]
+}
+
+model Track {
+  id              String           @id @default(cuid())
+  artistId        String
+  slug            String           @unique
+  title           String
+  genre           String
+  mood            String?
+  coverPath       String?
+  previewPath     String?
+  mp3Path         String?
+  wavPath         String?
+  priceKobo       Int              @default(0)
+  durationSeconds Int
+  isFreeToStream  Boolean          @default(false)
+  isPublished     Boolean          @default(false)
+  releasedAt      DateTime?
+  createdAt       DateTime         @default(now())
+  artist          Artist           @relation(fields: [artistId], references: [id], onDelete: Restrict)
+  plays           MusicPlay[]
+  orderItems      MusicOrderItem[]
+
+  @@index([isPublished, releasedAt])
+  @@index([artistId])
+}
+
+model MusicPlay {
+  id           String   @id @default(cuid())
+  trackId      String
+  listenerHash String
+  playDay      String
+  playedAt     DateTime @default(now())
+  track        Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([trackId, listenerHash, playDay])
+  @@index([playedAt])
+}
+
+model MusicOrder {
+  id               String           @id @default(cuid())
+  buyerSessionHash String
+  buyerEmail       String
+  buyerName        String
+  reference        String           @unique
+  providerRef      String?
+  checkoutUrl      String?
+  idempotencyKey   String?          @unique
+  amountKobo       Int
+  status           MusicOrderStatus @default(PENDING)
+  createdAt        DateTime         @default(now())
+  paidAt           DateTime?
+  items            MusicOrderItem[]
+
+  @@index([buyerSessionHash, status])
+  @@index([buyerEmail])
+}
+
+model MusicOrderItem {
+  id            String              @id @default(cuid())
+  orderId       String
+  trackId       String
+  unitPriceKobo Int
+  createdAt     DateTime            @default(now())
+  order         MusicOrder          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  track         Track               @relation(fields: [trackId], references: [id], onDelete: Restrict)
+  downloadLinks MusicDownloadLink[]
+
+  @@index([orderId])
+  @@index([trackId])
+}
+
+model MusicDownloadLink {
+  id          String         @id @default(cuid())
+  orderItemId String
+  tokenHash   String         @unique
+  format      String
+  expiresAt   DateTime
+  createdAt   DateTime       @default(now())
+  orderItem   MusicOrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+}
+
+model ArtistApplication {
+  id          String            @id @default(cuid())
+  artistName  String
+  contactName String
+  email       String
+  links       String
+  message     String?
+  status      ApplicationStatus @default(PENDING)
+  reviewedAt  DateTime?
+  createdAt   DateTime          @default(now())
+}
