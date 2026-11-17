@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { MANAGERS, requireAdmin } from "@/lib/admin/auth";
 import { bail, str } from "@/lib/admin/format";
 import { getStudentRules } from "@/lib/student";
+import { notifyStudentDecision } from "@/lib/notify";
 
 const BACK = "/admin/students";
 
@@ -20,13 +21,14 @@ export async function approveStudent(fd: FormData) {
   const id = str(fd, "id");
   const v = await db.studentVerification.findUnique({ where: { id } });
   if (!v || v.status !== "PENDING") bail(BACK, "That application was already handled.");
-  const { validityDays } = await getStudentRules();
+  const { validityDays, percent } = await getStudentRules();
   const now = new Date();
   await db.studentVerification.update({
     where: { id },
     data: { status: "APPROVED", approvedAt: now, reviewedAt: now, expiresAt: new Date(now.getTime() + validityDays * 86400000), idPath: null },
   });
   await dropId(v.idPath);
+  await notifyStudentDecision(v, true, { percent });
   redirect(`${BACK}?saved=1`);
 }
 
@@ -39,6 +41,7 @@ export async function rejectStudent(fd: FormData) {
   if (!v || v.status !== "PENDING") bail(BACK, "That application was already handled.");
   await db.studentVerification.update({ where: { id }, data: { status: "REJECTED", rejectReason: reason.slice(0, 300), reviewedAt: new Date(), idPath: null } });
   await dropId(v.idPath);
+  await notifyStudentDecision(v, false, { reason });
   redirect(`${BACK}?saved=1`);
 }
 

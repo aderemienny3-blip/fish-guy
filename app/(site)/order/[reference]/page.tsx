@@ -29,6 +29,7 @@ export default async function OrderPage({ params }: { params: Promise<{ referenc
 
   const order = await db.order.findUnique({ where: { reference }, include: { items: true, zone: true, slot: true } });
   if (!order) notFound();
+  const whatsapp = (process.env.NEXT_PUBLIC_WHATSAPP ?? "").replace(/\D/g, "");
   const stepIndex = STEPS.indexOf(order.status as (typeof STEPS)[number]);
   const day = new Intl.DateTimeFormat("en-NG", { timeZone: "UTC", weekday: "long", day: "numeric", month: "long" }).format(new Date(order.deliveryDate + "T00:00:00Z"));
 
@@ -73,7 +74,14 @@ export default async function OrderPage({ params }: { params: Promise<{ referenc
         <p>{order.addressLine}{order.landmark ? `, near ${order.landmark}` : ""}</p>
       </section>
 
-      <Link href="/shop" className="button button-outline">Continue shopping</Link>
+      <div className="student-actions">
+        <Link href="/shop" className="button button-outline">Continue shopping</Link>
+        {whatsapp && (
+          <a className="button button-gold" target="_blank" rel="noreferrer" href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hello Fish Guy, my order is ${order.reference}.`)}`}>
+            Chat with us on WhatsApp
+          </a>
+        )}
+      </div>
     </main>
   );
 }

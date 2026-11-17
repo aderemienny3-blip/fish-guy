@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { fetchTransaction } from "@/lib/monnify";
+import { notifyNeedsRefund, notifyOrderPaid } from "@/lib/notify";
 
 /**
  * Idempotent: safe to call from the webhook AND the order page.
@@ -30,10 +31,11 @@ export async function settleOrder(reference: string) {
     return payment.order;
   }
 
-  return db.$transaction(async (tx) => {
+  // `fresh: true` only for the one call that actually flipped the order, so emails go out exactly once.
+  const settled = await db.$transaction(async (tx) => {
     // Re-check inside the transaction so concurrent callers settle once.
     const fresh = await tx.payment.findUnique({ where: { id: payment.id } });
-    if (fresh?.status === "PAID") return tx.order.findUniqueOrThrow({ where: { id: payment.orderId } });
+    if (fresh?.status === "PAID") return { order: await tx.order.findUniqueOrThrow({ where: { id: payment.orderId } }), fresh: false };
 
     await tx.payment.update({
       where: { id: payment.id },
@@ -55,13 +57,24 @@ export async function settleOrder(reference: string) {
       }
       if (!ok) {
         // Needs a manual refund from the Monnify dashboard.
-        return tx.order.update({ where: { id: order.id }, data: { status: "REFUNDED", paidAt: new Date() } });
+        return { order: await tx.order.update({ where: { id: order.id }, data: { status: "REFUNDED", paidAt: new Date() } }), fresh: true };
       }
     }
 
-    return tx.order.update({
-      where: { id: order.id },
-      data: { status: "PAID", paidAt: new Date() },
-    });
+    return { order: await tx.order.update({ where: { id: order.id }, data: { status: "PAID", paidAt: new Date() } }), fresh: true };
   });
+
+  if (settled.fresh) {
+    try {
+      if (settled.order.status === "REFUNDED") {
+        await notifyNeedsRefund(settled.order);
+      } else {
+        const full = await db.order.findUnique({ where: { id: settled.order.id }, include: { items: true, zone: true, slot: true } });
+        if (full) await notifyOrderPaid(full);
+      }
+    } catch (e) {
+      console.error("order notification failed", e);
+    }
+  }
+  return settled.order;
 }

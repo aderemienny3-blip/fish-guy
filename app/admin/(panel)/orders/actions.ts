@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { MANAGERS, requireAdmin } from "@/lib/admin/auth";
 import { CANCELLABLE, NEXT_STATUS, canAdvance } from "@/lib/admin/orders";
 import { bail, str } from "@/lib/admin/format";
+import { notifyOrderStatus } from "@/lib/notify";
 
 export async function advanceOrder(fd: FormData) {
   const admin = await requireAdmin();
@@ -18,7 +19,8 @@ export async function advanceOrder(fd: FormData) {
   if (!to || !canAdvance(admin.role, order.status)) bail(back, "You can't move this order forward.");
 
   // Guarded update: does nothing if someone else already moved it.
-  await db.order.updateMany({ where: { id: order.id, status: order.status }, data: { status: to } });
+  const r = await db.order.updateMany({ where: { id: order.id, status: order.status }, data: { status: to } });
+  if (r.count > 0) await notifyOrderStatus(order, to);
   redirect(back);
 }
 
