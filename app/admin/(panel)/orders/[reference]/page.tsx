@@ -6,6 +6,7 @@ import { ADVANCE_LABEL, canAdvance, canCancel } from "@/lib/admin/orders";
 import { fmtDateTime, fmtDay } from "@/lib/admin/format";
 import { formatNaira } from "@/lib/money";
 import PrintButton from "@/components/admin/PrintButton";
+import { waLink, waMessages, suggestedKeys } from "@/lib/admin/whatsapp";
 import { Banner, PageHeader, StatusBadge, btn, btnDanger, btnGhost, card, td, th } from "@/components/admin/ui";
 import { advanceOrder, cancelOrder } from "../actions";
 
@@ -28,6 +29,9 @@ export default async function OrderDetail({
 
   const advance = canAdvance(admin.role, order.status);
   const cancel = canCancel(admin.role, order.status);
+  const msgs = waMessages({ contactName: order.contactName, reference: order.reference, slotLabel: order.slot.label, day: fmtDay(order.deliveryDate), status: order.status });
+  const keys = suggestedKeys(order.status);
+  const wa = keys.map((k) => msgs.find((m) => m.key === k)!).filter(Boolean);
 
   return (
     <>
@@ -121,6 +125,21 @@ export default async function OrderDetail({
               View customer
             </Link>
           </section>
+
+          {order.status !== "PENDING_PAYMENT" && order.status !== "EXPIRED" && (
+            <section className={`${card} p-5 print:hidden`}>
+              <h2 className="mb-1 font-serif text-xl">Message customer</h2>
+              <p className="mb-3 text-xs text-[#9A9585]">Opens WhatsApp with the message ready. You press Send.</p>
+              <div className="flex flex-col gap-2">
+                {wa.map((m, i) => (
+                  <a key={m.key} href={waLink(order.contactPhone, m.text)} target="_blank" rel="noreferrer" className={i === 0 ? btn : btnGhost}>
+                    WhatsApp: {m.label}
+                  </a>
+                ))}
+                <a href={`tel:+${order.contactPhone}`} className={btnGhost}>Call {order.contactPhone}</a>
+              </div>
+            </section>
+          )}
 
           <section className={`${card} p-5 print:hidden`}>
             <h2 className="mb-3 font-serif text-xl">Payment</h2>

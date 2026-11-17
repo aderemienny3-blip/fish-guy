@@ -4,6 +4,7 @@ import { requireAdmin } from "@/lib/admin/auth";
 import { fmtDay } from "@/lib/admin/format";
 import { addDays, lagosNow } from "@/lib/delivery";
 import { formatNaira } from "@/lib/money";
+import { waLink } from "@/lib/admin/whatsapp";
 import PrintButton from "@/components/admin/PrintButton";
 import { Empty, PageHeader, StatusBadge, btn, btnGhost, card, input } from "@/components/admin/ui";
 
@@ -76,6 +77,11 @@ export default async function ManifestPage({
                       {o.items.map((i) => `${i.quantity} × ${i.nameSnapshot}`).join(", ")}
                     </p>
                     {o.notes && <p className="italic">Note: {o.notes}</p>}
+                    <p className="mt-2 flex flex-wrap gap-2 print:hidden">
+                      <a href={`tel:+${o.contactPhone}`} className={btnGhost}>Call</a>
+                      <a target="_blank" rel="noreferrer" className={btnGhost} href={waLink(o.contactPhone, `Hello ${o.contactName.split(" ")[0]}, your Fish Guy order ${o.reference} is on its way to you now. Please keep your phone close so our rider can reach you.`)}>WhatsApp: on the way</a>
+                      <a target="_blank" rel="noreferrer" className={btnGhost} href={waLink(o.contactPhone, `Hello ${o.contactName.split(" ")[0]}, our Fish Guy rider is at your address with order ${o.reference}. Please come out or call us if you cannot find the rider.`)}>WhatsApp: I'm here</a>
+                    </p>
                     <p className="text-[#9A9585] print:text-black">Total {formatNaira(o.totalKobo)}</p>
                   </li>
                 ))}
