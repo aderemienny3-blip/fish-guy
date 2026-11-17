@@ -1,6 +1,7 @@
 import type { Product } from "@prisma/client";
 import { koboToInput } from "@/lib/admin/format";
 import { btn, input, label } from "./ui";
+import ProductPhotoField from "./ProductPhotoField";
 
 export default function ProductFields({ product }: { product?: Product }) {
   return (
@@ -47,11 +48,7 @@ export default function ProductFields({ product }: { product?: Product }) {
         </div>
       </div>
 
-      <div>
-        <label className={label} htmlFor="imageUrl">Photo link</label>
-        <input id="imageUrl" name="imageUrl" defaultValue={product?.imageUrl ?? ""} className={input} placeholder="https://..." />
-        <p className="mt-1 text-xs text-[#9A9585]">Paste a link to the photo for now. Direct photo upload comes later.</p>
-      </div>
+      <ProductPhotoField initial={product?.imageUrl ?? ""} />
 
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="active" defaultChecked={product ? product.active : true} className="h-4 w-4 accent-[#D4AF37]" />

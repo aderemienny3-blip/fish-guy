@@ -1,9 +1,13 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { del } from "@vercel/blob";
 import { db } from "@/lib/db";
 import { MANAGERS, requireAdmin } from "@/lib/admin/auth";
 import { bail, isUniqueError, nairaToKobo, slugify, str } from "@/lib/admin/format";
+
+const PHOTO_URL = /^\/api\/shop\/photo\?p=products%2F[A-Za-z0-9._-]{1,150}$/;
+const photoPath = (u: string | null) => (u && PHOTO_URL.test(u) ? decodeURIComponent(u.split("p=")[1]) : null);
 
 export async function saveProduct(fd: FormData) {
   await requireAdmin(MANAGERS);
@@ -25,7 +29,7 @@ export async function saveProduct(fd: FormData) {
   if (packSizeG !== null && (!Number.isInteger(packSizeG) || packSizeG <= 0)) {
     bail(back, "Pack size must be a whole number of grams.");
   }
-  if (imageUrl && !/^https:\/\//i.test(imageUrl)) bail(back, "Image link must start with https://");
+  if (imageUrl && !/^https:\/\//i.test(imageUrl) && !PHOTO_URL.test(imageUrl)) bail(back, "That photo is not valid. Upload it again.");
 
   const data = {
     name,
@@ -41,8 +45,12 @@ export async function saveProduct(fd: FormData) {
   };
 
   try {
+    const before = id ? await db.product.findUnique({ where: { id }, select: { imageUrl: true } }) : null;
     if (id) await db.product.update({ where: { id }, data });
     else await db.product.create({ data });
+    // Tidy up: delete the old uploaded photo if it was replaced or removed.
+    const old = photoPath(before?.imageUrl ?? null);
+    if (old && old !== photoPath(data.imageUrl)) { try { await del(old); } catch { /* ignore */ } }
   } catch (e) {
     if (isUniqueError(e)) bail(back, "Another product already uses that web address. Change the slug.");
     throw e;
