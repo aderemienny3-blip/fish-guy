@@ -6,6 +6,7 @@ import { auth } from "@/lib/customer-auth";
 import { initTransaction } from "@/lib/monnify";
 import { normalizeNgPhone } from "@/lib/phone";
 import { deliveryFeeFor, isSlotBookable } from "@/lib/delivery";
+import { discountFor, findUsableVerification, getStudentRules } from "@/lib/student";
 
 const HOLD_MINUTES = 30;
 
@@ -20,6 +21,7 @@ const Body = z.object({
   zoneId: z.string(),
   slotId: z.string(),
   deliveryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  studentRef: z.string().optional(),
 });
 
 class CheckoutError extends Error {}
@@ -32,6 +34,23 @@ export async function POST(req: Request) {
   const b = parsed.data;
   const phone = normalizeNgPhone(b.phone);
   if (!phone) return NextResponse.json({ error: "Enter a valid Nigerian phone number." }, { status: 400 });
+
+  // Student discount: only with an approved, unexpired verification bound to this phone number.
+  let studentVerificationId: string | null = null;
+  let studentPercent = 0;
+  let studentMax: number | null = null;
+  if (b.studentRef) {
+    const [v, rules] = await Promise.all([findUsableVerification(b.studentRef, phone), getStudentRules()]);
+    if (!v || rules.percent <= 0) {
+      return NextResponse.json(
+        { error: "Your student discount could not be applied. Use the phone number you verified with, or remove the discount to continue." },
+        { status: 409 },
+      );
+    }
+    studentVerificationId = v.id;
+    studentPercent = rules.percent;
+    studentMax = rules.maxKobo;
+  }
 
   const session = await auth();
   const customerId = (session as unknown as { customerId?: string } | null)?.customerId ?? null;
@@ -83,6 +102,8 @@ export async function POST(req: Request) {
         subtotal += p.priceKobo * qty;
       }
 
+      const discount = studentVerificationId ? discountFor(subtotal, studentPercent, studentMax) : 0;
+      // Free-delivery threshold is judged on the food total before the student discount.
       const deliveryFee = deliveryFeeFor(zone, subtotal);
 
       return tx.order.create({
@@ -100,7 +121,9 @@ export async function POST(req: Request) {
           deliveryDate: b.deliveryDate,
           subtotalKobo: subtotal,
           deliveryFeeKobo: deliveryFee,
-          totalKobo: subtotal + deliveryFee,
+          discountKobo: discount,
+          studentVerificationId: discount > 0 ? studentVerificationId : null,
+          totalKobo: subtotal - discount + deliveryFee,
           expiresAt: new Date(Date.now() + HOLD_MINUTES * 60 * 1000),
           items: {
             create: products.map((p) => ({

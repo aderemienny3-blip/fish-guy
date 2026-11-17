@@ -28,7 +28,18 @@ export async function saveSettings(fd: FormData) {
   const lostDays = wholeNumber(fd, "lostDays", 1, "Lost days");
   if (lostDays <= atRiskDays) bail(BACK, "Lost days must be more than at-risk days.");
 
+  const studentPercent = Number(str(fd, "studentPercent") || "0");
+  if (!Number.isInteger(studentPercent) || studentPercent < 0 || studentPercent > 50) bail(BACK, "Student discount must be a whole number from 0 to 50.");
+  const maxRaw = str(fd, "studentMax");
+  const studentMax = maxRaw ? nairaToKobo(maxRaw) : null;
+  if (maxRaw && studentMax === null) bail(BACK, "Student discount cap must be a number in naira (or empty).");
+  const studentDays = Number(str(fd, "studentDays") || "365");
+  if (!Number.isInteger(studentDays) || studentDays < 30 || studentDays > 1095) bail(BACK, "Verification length must be between 30 and 1095 days.");
+
   const data = {
+    studentDiscountPercent: studentPercent,
+    studentDiscountMaxKobo: studentMax,
+    studentValidityDays: studentDays,
     openMinute: open,
     closeMinute: close,
     lowStockThreshold: wholeNumber(fd, "lowStock", 0, "Low-stock level"),

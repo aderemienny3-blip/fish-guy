@@ -24,6 +24,7 @@ export default async function SoundsPage({ searchParams }: SoundsPageProps) {
           <div className="hero-actions">
             <a href="#new-releases" className="button button-gold">Explore the releases <span aria-hidden="true">↓</span></a>
             <Link href="/library" className="button button-outline">Open my library</Link>
+            <Link href="/shop" className="button button-outline">Shop frozen food</Link>
           </div>
         </div>
         <div className="hero-card" aria-label="Fish Guy Sounds, independent Lagos hip-hop">

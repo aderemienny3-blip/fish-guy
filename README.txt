@@ -1,28 +1,33 @@
-FISH GUY SOUNDS - merge kit
+FISH GUY - STUDENT DISCOUNT
 ===========================
-Adds the music app to your fish-guy project: same database, same Monnify, one webhook, admin pages.
+Run these in PowerShell, inside C:\Users\Chairman Enny\fish-guy
 
-STEPS (PowerShell, from your Downloads folder where the zip landed)
-1. cd "C:\Users\Chairman Enny\fish-guy"
-2. Expand-Archive -Force "$env:USERPROFILE\Downloads\fish-guy-music.zip" -DestinationPath .
-   (it replaces app\api\webhooks\monnify\route.ts and app\admin\(panel)\layout.tsx on purpose)
-3. Get-Content prisma\music-models.prisma | Add-Content prisma\schema.prisma
-   Remove-Item prisma\music-models.prisma
-4. npm i @vercel/blob lucide-react
-5. npx prisma migrate dev --name music
-6. npm run build
-7. git add . ; git commit -m "Add Fish Guy Sounds" ; git push
+1) Unzip over the project
+   Expand-Archive -Force "$env:USERPROFILE\Downloads\fish-guy-students.zip" -DestinationPath .
 
-VERCEL
-- Storage > Create > Blob. Choose a PRIVATE store. Connect it to the fish-guy project (adds BLOB_READ_WRITE_TOKEN).
-- Env vars already needed: MONNIFY_API_KEY, MONNIFY_SECRET_KEY, MONNIFY_CONTRACT_CODE, MONNIFY_BASE_URL.
-- Monnify webhook URL (one only): https://YOUR-DOMAIN/api/webhooks/monnify
+2) Add the new tables to the schema (safe to run twice)
+   node scripts/patch-schema-students.mjs
 
-WHAT YOU GET
-Public:  /sounds  /sounds/[track]  /sounds/apply  /sounds/return  /library  /artists/[artist]
-Admin:   /admin/music (stats, tracks, publish, price)  /admin/music/applications
-         /admin/music/artists/new  /admin/music/tracks/new (uploads straight to Blob)
+3) Create the tables in your database
+   npx prisma migrate dev --name students
 
-PUBLISHING A TRACK
-Add artist (or approve an application) > Upload track (full MP3 + 30-second preview, optional WAV/cover) > Publish.
-Paid tracks play only the preview until bought. Free-to-stream tracks play in full.
+4) Add the Lagos school list (you can edit it later in Admin > Students > Schools list)
+   node scripts/seed-institutions.mjs
+
+5) Check it builds, then publish
+   npm run build
+   git add .
+   git commit -m "Student discount"
+   git push
+
+6) Turn it on: Admin > Settings > Student discount. Type the percentage you choose
+   (0 = off). Optionally set a maximum naira discount per order, and how long
+   a verification lasts (default 365 days). Save.
+
+HOW IT WORKS
+- Students apply at /student with a photo of their ID. You review them in Admin > Students
+  (Approve, or Reject with a reason). The ID photo is deleted after your decision.
+- Once approved, the student's phone number gets the discount at checkout.
+  It only works with the phone number they applied with.
+- The discount is taken off the food total, never the delivery fee.
+- Nothing is shown to customers until you set a percentage above 0.

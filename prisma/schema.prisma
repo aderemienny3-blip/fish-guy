@@ -111,6 +111,9 @@ model Order {
   @@index([deliveryDate, slotId])
   @@index([customerId, createdAt])
   @@index([contactPhone])
+  discountKobo           Int                  @default(0)
+  studentVerificationId  String?
+  studentVerification    StudentVerification? @relation(fields: [studentVerificationId], references: [id])
 }
 
 model OrderItem {
@@ -192,6 +195,9 @@ model StoreSettings {
   atRiskDays             Int      @default(45)
   lostDays               Int      @default(90)
   updatedAt              DateTime @updatedAt
+  studentDiscountPercent Int      @default(0) // 0 = student discount is off
+  studentDiscountMaxKobo Int? // optional cap per order, in kobo
+  studentValidityDays    Int      @default(365)
 }
 // ---- FISH GUY SOUNDS: paste this block at the END of prisma/schema.prisma ----
 
@@ -310,4 +316,53 @@ model ArtistApplication {
   status      ApplicationStatus @default(PENDING)
   reviewedAt  DateTime?
   createdAt   DateTime          @default(now())
+}
+
+
+// ---- FISH GUY STUDENT DISCOUNT ----
+
+enum InstitutionType {
+  UNIVERSITY
+  POLYTECHNIC
+  COLLEGE_OF_EDUCATION
+  OTHER
+}
+
+enum StudentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  REVOKED
+}
+
+model Institution {
+  id            String                @id @default(cuid())
+  name          String                @unique
+  type          InstitutionType
+  active        Boolean               @default(true)
+  createdAt     DateTime              @default(now())
+  verifications StudentVerification[]
+}
+
+model StudentVerification {
+  id               String        @id @default(cuid())
+  reference        String        @unique
+  fullName         String
+  phone            String
+  email            String
+  institutionId    String?
+  otherInstitution String?
+  matricNumber     String
+  idPath           String?
+  status           StudentStatus @default(PENDING)
+  rejectReason     String?
+  approvedAt       DateTime?
+  expiresAt        DateTime?
+  reviewedAt       DateTime?
+  createdAt        DateTime      @default(now())
+  institution      Institution?  @relation(fields: [institutionId], references: [id])
+  orders           Order[]
+
+  @@index([phone])
+  @@index([status, createdAt])
 }

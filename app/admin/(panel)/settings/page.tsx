@@ -54,6 +54,18 @@ export default async function SettingsPage({
           </div>
         </section>
 
+        <section className={`${card} p-5`}>
+          <h2 className="font-serif text-xl">Student discount</h2>
+          <p className="mb-4 mt-1 text-sm text-[#9A9585]">
+            Percentage off the food in an order for verified Lagos students. Delivery is never discounted. Set 0 to switch the discount off.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div><label className={label} htmlFor="studentPercent">Discount (%)</label><input id="studentPercent" name="studentPercent" type="number" min={0} max={50} defaultValue={s.studentDiscountPercent} className={input} /></div>
+            <div><label className={label} htmlFor="studentMax">Max per order (₦)</label><input id="studentMax" name="studentMax" defaultValue={s.studentDiscountMaxKobo ? koboToInput(s.studentDiscountMaxKobo) : ""} placeholder="optional" className={input} /></div>
+            <div><label className={label} htmlFor="studentDays">Verified for (days)</label><input id="studentDays" name="studentDays" type="number" min={30} max={1095} defaultValue={s.studentValidityDays} className={input} /></div>
+          </div>
+        </section>
+
         <button type="submit" className={btn}>Save settings</button>
       </form>
     </>
