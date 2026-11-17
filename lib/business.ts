@@ -1,0 +1,19 @@
+/**
+ * The facts about your business. Edit this ONE file, then push.
+ * Anything left empty ("") is simply not shown on the site, so nothing is ever made up.
+ */
+export const BUSINESS = {
+  name: "Fish Guy",
+  legalName: "", // registered name, e.g. "Fish Guy Foods Ltd". Leave empty if unregistered.
+  cacNumber: "", // e.g. "RC 1234567"
+  address: "", // business address
+  phone: "", // e.g. "0801 234 5678"
+  whatsapp: "", // digits only with country code, e.g. "2348012345678"
+  email: "", // customer support email
+  instagram: "", // handle only, e.g. "fishguy.ng"
+  // Your policy: how long after delivery a customer can report a problem (hours).
+  reportWindowHours: 24,
+  lastUpdated: "17 November 2026",
+};
+
+export const hasContact = () => !!(BUSINESS.phone || BUSINESS.whatsapp || BUSINESS.email);

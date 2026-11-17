@@ -766,3 +766,12 @@
 .site-root .student-fineprint { margin-top: 14px; }
 .site-root .check-row { display: flex; gap: 10px; align-items: flex-start; font-size: 14px; color: #cfc9b6; }
 .site-root .check-row input { margin-top: 4px; width: 18px; height: 18px; accent-color: #d4af37; }
+
+/* ---------- Legal pages ---------- */
+.site-root .legal-body { max-width: 680px; display: grid; gap: 26px; margin-top: 8px; }
+.site-root .legal-section h2 { margin: 0 0 8px; font-family: Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 400; color: #f5f1e6; }
+.site-root .legal-section p, .site-root .legal-list { margin: 0 0 10px; color: #b7b1a0; font-size: 14px; line-height: 1.75; }
+.site-root .legal-list { padding-left: 18px; }
+.site-root .legal-list li { margin-bottom: 6px; }
+.site-root .legal-section a { color: #d4af37; }
+.site-root .legal-updated { margin-top: 30px; }

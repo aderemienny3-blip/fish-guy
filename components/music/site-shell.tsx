@@ -34,6 +34,10 @@ export function SiteFooter() {
         <Link href="/library">My library</Link>
         <Link href="/student">Student discount</Link>
         <Link href="/sounds/apply">Artist application</Link>
+        <Link href="/delivery-refunds">Delivery &amp; refunds</Link>
+        <Link href="/terms">Terms</Link>
+        <Link href="/privacy">Privacy</Link>
+        <Link href="/contact">Contact</Link>
       </nav>
     </footer>
   )
