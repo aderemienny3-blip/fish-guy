@@ -252,6 +252,7 @@ model Track {
 
   @@index([isPublished, releasedAt])
   @@index([artistId])
+  playlistTracks  PlaylistTrack[]
 }
 
 model MusicPlay {
@@ -451,4 +452,32 @@ model AdEvent {
 
   @@unique([campaignId, type, viewerHash, day])
   @@index([campaignId, type])
+}
+
+
+// ---- FISH GUY PLAYLISTS (hand-made) ----
+
+model Playlist {
+  id             String          @id @default(cuid())
+  slug           String          @unique
+  title          String
+  description    String?
+  isPublished    Boolean         @default(false)
+  isShopPlaylist Boolean         @default(false)
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  tracks         PlaylistTrack[]
+}
+
+model PlaylistTrack {
+  id         String   @id @default(cuid())
+  playlistId String
+  trackId    String
+  position   Int
+  createdAt  DateTime @default(now())
+  playlist   Playlist @relation(fields: [playlistId], references: [id], onDelete: Cascade)
+  track      Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@unique([playlistId, trackId])
+  @@index([playlistId, position])
 }

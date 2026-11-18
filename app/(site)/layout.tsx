@@ -7,6 +7,7 @@ import "./ads.css";
 import "./hero.css";
 import { PwaBoot } from "@/components/shop/pwa";
 import "./site.css";
+import "./playlists.css";
 
 export const metadata: Metadata = {
   title: "Fish Guy | Frozen Food Delivery in Lagos",

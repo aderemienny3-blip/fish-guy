@@ -35,6 +35,7 @@ export default async function MusicAdmin({
             <Link href="/admin/music/applications" className={btnGhost}>
               Applications{pending ? ` (${pending})` : ""}
             </Link>
+            <Link href="/admin/music/playlists" className={btnGhost}>Playlists</Link>
             <Link href="/admin/music/artists/new" className={btnGhost}>Add artist</Link>
             <Link href="/admin/music/tracks/new" className={btn}>Upload track</Link>
           </>

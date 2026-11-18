@@ -1,0 +1,4 @@
+.site-root .playlist-card { display: grid; gap: 6px; color: #f5f1e6; text-decoration: none; }
+.site-root .playlist-cover { position: relative; aspect-ratio: 1 / 1; border-radius: 10px; overflow: hidden; background: #17150f; border: 1px solid #29271f; }
+.site-root .playlist-card strong { font-size: 16px; }
+.site-root .playlist-card small { color: #9a9585; }
