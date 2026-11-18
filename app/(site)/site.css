@@ -775,3 +775,10 @@
 .site-root .legal-list li { margin-bottom: 6px; }
 .site-root .legal-section a { color: #d4af37; }
 .site-root .legal-updated { margin-top: 30px; }
+
+/* ---------- Install bar ---------- */
+.site-root .install-bar { position: fixed; left: 12px; right: 12px; bottom: 12px; z-index: 60; display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid rgba(212,175,55,.55); border-radius: 12px; background: #141414; box-shadow: 0 10px 30px rgba(0,0,0,.5); max-width: 520px; margin: 0 auto; }
+.site-root .install-copy { flex: 1; display: grid; gap: 2px; }
+.site-root .install-copy strong { color: #f5f1e6; font-size: 14px; }
+.site-root .install-copy span { color: #9a9585; font-size: 12px; }
+.site-root .install-close { background: none; border: 0; color: #9a9585; font-size: 16px; cursor: pointer; padding: 6px; }
