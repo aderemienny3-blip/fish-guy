@@ -61,7 +61,7 @@ export default async function ProductsPage({
                 <tr key={p.id} className={p.active ? "" : "opacity-60"}>
                   <td className={td}>
                     <Link href={`/admin/products/${p.id}`} className="font-medium hover:text-[#D4AF37]">{p.name}</Link>
-                    <p className="text-xs text-[#9A9585]">{p.category ?? "No category"} · per {p.unit}</p>
+                    <p className="text-xs text-[#9A9585]">{p.isAddOn ? "Add-on · " : ""}{p.category ?? "No category"} · per {p.unit}</p>
                   </td>
                   <td className={td}>{formatNaira(p.priceKobo)}</td>
                   <td className={td}>

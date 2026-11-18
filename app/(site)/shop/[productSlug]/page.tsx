@@ -4,6 +4,8 @@ import { notFound } from "next/navigation";
 import { AddToCart } from "@/components/shop/add-to-cart";
 import { ProductImage, stockLabel } from "@/components/shop/product-card";
 import { getProductBySlug } from "@/lib/shop/data";
+import { getAddOns } from "@/lib/shop/addons";
+import { AddOnShelf } from "@/components/shop/addon-shelf";
 import { naira } from "@/lib/shop/format";
 
 export const dynamic = "force-dynamic";
@@ -21,6 +23,7 @@ export default async function ProductPage({ params }: Props) {
   const p = await getProductBySlug(productSlug);
   if (!p) notFound();
   const low = stockLabel(p);
+  const addOns = p.isAddOn ? [] : await getAddOns();
 
   return (
     <main className="page-width product-page">
@@ -48,6 +51,7 @@ export default async function ProductPage({ params }: Props) {
           </ul>
         </div>
       </section>
+      <AddOnShelf items={addOns} title="Goes well with this" note="Add ponmo, plantain and more in one tap." />
     </main>
   );
 }

@@ -49,6 +49,7 @@ model Product {
   packSizeG   Int? // grams per pack, if sold by pack
   stockQty    Int         @default(0)
   active      Boolean     @default(true)
+  isAddOn     Boolean     @default(false) // ponmo, plantain and other extras
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   items       OrderItem[]

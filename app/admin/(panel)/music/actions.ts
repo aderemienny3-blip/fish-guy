@@ -7,7 +7,7 @@ import { bail, isUniqueError, nairaToKobo, slugify, str } from "@/lib/admin/form
 import { GENRES } from "@/lib/music/data";
 
 const RESERVED = new Set(["apply", "return"]);
-const httpsOrEmpty = (v: string) => v === "" || /^https:\/\//i.test(v);
+const httpsOrEmpty = (v: string) => v === "" || /^https:\/\//i.test(v) || /^\/api\/shop\/photo\?p=products%2F[A-Za-z0-9._-]{1,150}$/.test(v);
 
 async function uniqueArtistSlug(base: string) {
   let slug = slugify(base) || "artist";

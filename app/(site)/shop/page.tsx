@@ -8,7 +8,7 @@ export const metadata = { title: "Shop frozen food | Fish Guy" };
 
 export default async function ShopPage({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   const { category } = await searchParams;
-  const { products, categories, hasAny } = await getShopData(category);
+  const { products, categories, hasAny, addOns } = await getShopData(category);
   const selected = categories.find((c) => c.slug === category);
 
   return (
@@ -18,12 +18,13 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         <div><h1>{selected?.label ?? "Shop frozen food"}</h1><p>Prices are per kg. Delivery across Lagos, except Ikorodu.</p></div>
         <Link href="/" className="text-link">Back to home</Link>
       </div>
-      {categories.length > 0 && (
+      {(categories.length > 0 || addOns.length > 0) && (
         <nav className="shop-filter-list" aria-label="Product categories">
           <Link href="/shop" aria-current={!selected ? "page" : undefined}>All products</Link>
           {categories.map((c) => (
             <Link href={`/shop?category=${c.slug}`} aria-current={selected?.slug === c.slug ? "page" : undefined} key={c.slug}>{c.label}</Link>
           ))}
+          {addOns.length > 0 && <a href="/shop#add-ons" className="filter-addons">Add-ons</a>}
         </nav>
       )}
       <section id="products" aria-label="Products">
@@ -38,6 +39,13 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
           />
         )}
       </section>
+      {addOns.length > 0 && !selected && (
+        <section id="add-ons" className="addon-section" aria-label="Add-ons">
+          <h2>Add-ons</h2>
+          <p>Ponmo, plantain and more. Add them to any order.</p>
+          <div className="product-grid">{addOns.map((p) => <ProductCard key={p.id} product={p} />)}</div>
+        </section>
+      )}
     </main>
   );
 }

@@ -55,6 +55,11 @@ export default function ProductFields({ product }: { product?: Product }) {
         Visible in the shop
       </label>
 
+      <label className="flex items-center gap-2 text-sm">
+        <input type="checkbox" name="isAddOn" defaultChecked={product ? product.isAddOn : false} className="h-4 w-4 accent-[#D4AF37]" />
+        Add-on (ponmo, plantain, sides). Shown in the Add-ons section and offered in the cart.
+      </label>
+
       <button type="submit" className={btn}>{product ? "Save changes" : "Add product"}</button>
     </div>
   );

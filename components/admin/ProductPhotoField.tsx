@@ -18,7 +18,7 @@ async function shrink(file: File): Promise<Blob> {
   return (await toBlob("image/webp", 0.85)) ?? (await toBlob("image/jpeg", 0.85)) ?? Promise.reject(new Error("no blob"));
 }
 
-export default function ProductPhotoField({ initial, title = "Product photo" }: { initial: string; title?: string }) {
+export default function ProductPhotoField({ initial, title = "Product photo", name = "imageUrl" }: { initial: string; title?: string; name?: string }) {
   const [url, setUrl] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -45,10 +45,10 @@ export default function ProductPhotoField({ initial, title = "Product photo" }: 
   return (
     <div>
       <span className={label}>{title}</span>
-      <input type="hidden" name="imageUrl" value={url} />
+      <input type="hidden" name={name} value={url} />
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-lg border border-white/15 bg-[#0A0A0A] text-xs text-[#9A9585]">
-          {url ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={url} alt="Product" className="h-full w-full object-cover" /> : "No photo"}
+          {url ? /* eslint-disable-next-line @next/next/no-img-element */ <img src={url} alt="" className="h-full w-full object-cover" /> : "No photo"}
         </div>
         <div className="flex flex-col gap-2">
           <label className={`${btnGhost} cursor-pointer ${busy ? "pointer-events-none opacity-50" : ""}`}>

@@ -42,6 +42,7 @@ export async function saveProduct(fd: FormData) {
     packSizeG,
     stockQty,
     active: fd.get("active") === "on",
+    isAddOn: fd.get("isAddOn") === "on",
   };
 
   try {

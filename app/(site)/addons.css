@@ -1,0 +1,23 @@
+/* Add-ons: shop section, product-page shelf, cart-drawer row */
+.site-root .addon-section { margin-top: 56px; padding-top: 36px; border-top: 1px solid rgba(245,241,230,.1); }
+.site-root .addon-section h2 { margin: 0 0 6px; font-family: Georgia, 'Times New Roman', serif; font-size: 28px; font-weight: 400; }
+.site-root .addon-section > p { margin: 0 0 22px; color: #b4af9f; font-size: 14px; }
+.site-root .addon-shelf { margin-top: 44px; padding: 22px; border: 1px solid rgba(212,175,55,.28); background: rgba(212,175,55,.04); }
+.site-root .addon-shelf h2 { margin: 0 0 4px; font-family: Georgia, 'Times New Roman', serif; font-size: 22px; font-weight: 400; }
+.site-root .addon-shelf > p { margin: 0 0 14px; color: #9a9585; font-size: 13px; }
+.site-root .addon-shelf ul, .site-root .addon-drawer ul { list-style: none; margin: 12px 0 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 10px; }
+.site-root .addon-chip { display: flex; align-items: center; gap: 12px; padding: 8px; border: 1px solid #29271f; background: #0f0f0d; }
+.site-root .addon-thumb { position: relative; flex: none; width: 52px; height: 52px; overflow: hidden; background: #1a1913; display: grid; place-items: center; }
+.site-root .addon-thumb b { color: #d4af37; font-family: Georgia, serif; font-size: 22px; font-weight: 400; }
+.site-root .addon-text { flex: 1; min-width: 0; display: grid; gap: 2px; }
+.site-root .addon-text strong { font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.site-root .addon-text small { color: #b4af9f; font-size: 12px; }
+.site-root .addon-add { flex: none; min-width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 1px solid #d4af37; background: transparent; color: #d4af37; cursor: pointer; font-size: 13px; font-weight: 700; }
+.site-root .addon-add svg { width: 16px; height: 16px; }
+.site-root .addon-add:hover:not(:disabled) { background: #d4af37; color: #0a0a0a; }
+.site-root .addon-add.is-in { background: rgba(212,175,55,.14); }
+.site-root .addon-add:disabled { opacity: .5; cursor: not-allowed; }
+.site-root .addon-drawer { padding: 14px 22px 4px; border-top: 1px solid #29271f; }
+.site-root .addon-drawer h3 { margin: 0; color: #d4af37; font-size: 11px; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; }
+.site-root .addon-drawer ul { grid-template-columns: 1fr; max-height: 168px; overflow-y: auto; }
+.site-root .filter-addons { color: #d4af37; }

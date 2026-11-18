@@ -15,6 +15,7 @@ export type ShopProduct = {
   stockQty: number;
   mostOrdered: boolean;
   sponsor: AdView | null;
+  isAddOn: boolean;
 };
 
 type Row = Awaited<ReturnType<typeof db.product.findMany>>[number];
@@ -30,6 +31,7 @@ const toView = (p: Row, top: Set<string>, stickers: AdView[] = []): ShopProduct 
   priceKobo: p.priceKobo,
   unit: p.unit,
   stockQty: p.stockQty,
+  isAddOn: p.isAddOn,
   mostOrdered: top.has(p.id),
   sponsor: top.has(p.id) && stickers.length ? stickers[[...top].indexOf(p.id) % stickers.length] : null,
 });
@@ -53,7 +55,8 @@ export async function getShopData(categorySlug?: string) {
     topProductIds(),
     liveCampaigns("STICKER"),
   ]);
-  const all = rows.map((p) => toView(p, top, stickers));
+  const all = rows.filter((p) => !p.isAddOn).map((p) => toView(p, top, stickers));
+  const addOns = rows.filter((p) => p.isAddOn).map((p) => toView(p, top));
   const categories: { label: string; slug: string; count: number }[] = [];
   for (const p of all) {
     if (!p.category || !p.categorySlug) continue;
@@ -62,7 +65,7 @@ export async function getShopData(categorySlug?: string) {
     else categories.push({ label: p.category, slug: p.categorySlug, count: 1 });
   }
   const products = categorySlug ? all.filter((p) => p.categorySlug === categorySlug) : all;
-  return { products, categories, hasAny: all.length > 0 };
+  return { products, categories, hasAny: all.length > 0, addOns };
 }
 
 export async function getProductBySlug(slug: string) {
