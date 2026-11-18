@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { slugifyCategory } from "./format";
+import { liveCampaigns, type AdView } from "@/lib/ads/data";
 
 export type ShopProduct = {
   id: string;
@@ -13,11 +14,12 @@ export type ShopProduct = {
   unit: string;
   stockQty: number;
   mostOrdered: boolean;
+  sponsor: AdView | null;
 };
 
 type Row = Awaited<ReturnType<typeof db.product.findMany>>[number];
 
-const toView = (p: Row, top: Set<string>): ShopProduct => ({
+const toView = (p: Row, top: Set<string>, stickers: AdView[] = []): ShopProduct => ({
   id: p.id,
   slug: p.slug,
   name: p.name,
@@ -29,6 +31,7 @@ const toView = (p: Row, top: Set<string>): ShopProduct => ({
   unit: p.unit,
   stockQty: p.stockQty,
   mostOrdered: top.has(p.id),
+  sponsor: top.has(p.id) && stickers.length ? stickers[[...top].indexOf(p.id) % stickers.length] : null,
 });
 
 /** Real "Most ordered" badge: top 3 products by quantity in paid orders over the last 30 days. */
@@ -45,11 +48,12 @@ async function topProductIds(): Promise<Set<string>> {
 }
 
 export async function getShopData(categorySlug?: string) {
-  const [rows, top] = await Promise.all([
+  const [rows, top, stickers] = await Promise.all([
     db.product.findMany({ where: { active: true }, orderBy: [{ category: "asc" }, { name: "asc" }] }),
     topProductIds(),
+    liveCampaigns("STICKER"),
   ]);
-  const all = rows.map((p) => toView(p, top));
+  const all = rows.map((p) => toView(p, top, stickers));
   const categories: { label: string; slug: string; count: number }[] = [];
   for (const p of all) {
     if (!p.category || !p.categorySlug) continue;

@@ -2,6 +2,8 @@ import type { Metadata, Viewport } from "next";
 import { MiniPlayer, MusicPlayerProvider } from "@/components/music/music-player";
 import { SiteFooter, SiteHeader } from "@/components/music/site-shell";
 import { CartProvider } from "@/components/shop/cart";
+import { AdPopup } from "@/components/ads/ad-popup";
+import "./ads.css";
 import { PwaBoot } from "@/components/shop/pwa";
 import "./site.css";
 
@@ -26,6 +28,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             <SiteFooter />
           </div>
           <MiniPlayer />
+          <AdPopup />
           <PwaBoot />
         </MusicPlayerProvider>
       </CartProvider>

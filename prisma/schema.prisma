@@ -366,3 +366,85 @@ model StudentVerification {
   @@index([phone])
   @@index([status, createdAt])
 }
+
+
+// ---- FISH GUY ADS ----
+
+enum AdPlacement {
+  POPUP
+  STICKER
+  FEATURED_STRIP
+  BAG_INSERT
+}
+
+enum AdStatus {
+  SUBMITTED
+  APPROVED
+  PAID
+  REJECTED
+  CANCELLED
+}
+
+enum AdEventType {
+  IMPRESSION
+  CLICK
+}
+
+model AdPackage {
+  id            String       @id @default(cuid())
+  name          String
+  placement     AdPlacement
+  priceKobo     Int
+  durationDays  Int
+  maxConcurrent Int? // null = no limit
+  description   String?
+  active        Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  campaigns     AdCampaign[]
+}
+
+model AdCampaign {
+  id           String      @id @default(cuid())
+  reference    String      @unique
+  packageId    String
+  package      AdPackage   @relation(fields: [packageId], references: [id])
+  packageName  String
+  placement    AdPlacement
+  priceKobo    Int
+  durationDays Int
+  artistName   String
+  contactName  String
+  phone        String
+  email        String
+  trackId      String?
+  linkUrl      String?
+  headline     String
+  tagline      String?
+  imagePath    String?
+  startDate    String // YYYY-MM-DD, Lagos
+  endDate      String
+  status       AdStatus    @default(SUBMITTED)
+  rejectReason String?
+  reviewedAt   DateTime?
+  paymentRef   String?     @unique
+  providerRef  String?
+  paidAt       DateTime?
+  createdAt    DateTime    @default(now())
+  events       AdEvent[]
+
+  @@index([status, placement, startDate, endDate])
+  @@index([phone])
+}
+
+model AdEvent {
+  id         String      @id @default(cuid())
+  campaignId String
+  campaign   AdCampaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  type       AdEventType
+  viewerHash String
+  day        String // Lagos date: one impression and one click per viewer per day
+  createdAt  DateTime    @default(now())
+
+  @@unique([campaignId, type, viewerHash, day])
+  @@index([campaignId, type])
+}

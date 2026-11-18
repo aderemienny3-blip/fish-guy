@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { verifyWebhookSignature } from "@/lib/monnify";
 import { settleOrder } from "@/lib/payments";
+import { AD_PAY_REF } from "@/lib/ads/labels";
+import { confirmAdPayment } from "@/lib/ads/payments";
 import { MUSIC_REF, confirmMusicOrder } from "@/lib/music/payments";
 
 // ONE webhook URL for the whole business. Set it in Monnify dashboard > Settings > Webhook URLs.
@@ -21,7 +23,9 @@ export async function POST(req: Request) {
   const ref = event.eventData?.paymentReference;
   if (event.eventType === "SUCCESSFUL_TRANSACTION" && ref) {
     try {
-      if (ref.startsWith("FGS-")) {
+      if (ref.startsWith("FGA-")) {
+        if (AD_PAY_REF.test(ref)) await confirmAdPayment(ref);
+      } else if (ref.startsWith("FGS-")) {
         if (MUSIC_REF.test(ref)) await confirmMusicOrder(ref);
       } else {
         await settleOrder(ref);

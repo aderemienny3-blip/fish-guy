@@ -4,6 +4,7 @@ import { Fish } from "lucide-react";
 import type { ShopProduct } from "@/lib/shop/data";
 import { naira } from "@/lib/shop/format";
 import { AddToCart } from "@/components/shop/add-to-cart";
+import { SponsorTag } from "@/components/ads/sponsor-tag";
 
 export function stockLabel(p: Pick<ShopProduct, "stockQty" | "unit">) {
   if (p.stockQty <= 0) return "Sold out";
@@ -31,6 +32,7 @@ export function ProductCard({ product }: { product: ShopProduct }) {
       </Link>
       <div className="product-card-body">
         {product.category && <p className="product-category">{product.category}</p>}
+        {product.sponsor && <SponsorTag ad={product.sponsor} />}
         <Link href={`/shop/${product.slug}`} className="product-name">{product.name}</Link>
         <p className="product-price">{naira(product.priceKobo)} <span>/ {product.unit}</span></p>
         {low && <p className={`product-stock ${product.stockQty <= 0 ? "is-out" : ""}`}>{low}</p>}

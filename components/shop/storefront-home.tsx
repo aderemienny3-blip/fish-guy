@@ -7,6 +7,8 @@ import type { ShopProduct } from "@/lib/shop/data";
 import { FreeStreamStrip } from "@/components/shop/free-stream-strip";
 import { ShopEmptyState } from "@/components/shop/shop-empty-state";
 import { ProductCard } from "@/components/shop/product-card";
+import { SponsoredStrip } from "@/components/ads/sponsored-strip";
+import type { AdView } from "@/lib/ads/data";
 
 const iconFor = (label: string): LucideIcon => {
   const l = label.toLowerCase();
@@ -27,11 +29,13 @@ export function StorefrontHome({
   products,
   categories,
   freeTracks,
+  sponsored = null,
   studentPercent = 0,
 }: {
   products: ShopProduct[];
   categories: { label: string; slug: string; count: number }[];
   freeTracks: MusicTrack[];
+  sponsored?: AdView | null;
   studentPercent?: number;
 }) {
   return (
@@ -57,6 +61,8 @@ export function StorefrontHome({
           <ArrowRight aria-hidden="true" />
         </Link>
       )}
+
+      {sponsored && <SponsoredStrip ad={sponsored} />}
 
       {categories.length > 0 && (
         <section className="shop-section category-section" id="categories" aria-labelledby="categories-title">
