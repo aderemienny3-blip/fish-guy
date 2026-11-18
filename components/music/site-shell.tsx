@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Disc3 } from 'lucide-react'
 import { CartDrawer } from '@/components/shop/cart-drawer'
+import { PlayMusicButton } from '@/components/music/play-music-button'
 
 export function SiteHeader() {
   return (
@@ -17,6 +18,7 @@ export function SiteHeader() {
       </nav>
       <div className="header-utilities">
         <span className="store-status"><span className="store-status-dot" aria-hidden="true" />Open 8:30 AM – 9:00 PM</span>
+        <PlayMusicButton variant="header" />
         <CartDrawer />
       </div>
     </header>

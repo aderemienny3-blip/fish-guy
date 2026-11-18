@@ -5,6 +5,7 @@ import type { MusicTrack } from "@/lib/music/data";
 import type { ShopProduct } from "@/lib/shop/data";
 import { FreeStreamStrip } from "@/components/shop/free-stream-strip";
 import { ShopEmptyState } from "@/components/shop/shop-empty-state";
+import { PlayMusicButton } from "@/components/music/play-music-button";
 import { ProductCard } from "@/components/shop/product-card";
 import { SponsoredStrip } from "@/components/ads/sponsored-strip";
 import type { AdView } from "@/lib/ads/data";
@@ -50,7 +51,10 @@ export function StorefrontHome({
           <p className="eyebrow">FISH GUY · FROZEN FOOD, LAGOS</p>
           <h1 id="shop-title">Good food,<br />kept cold.<br /><em>Delivered across Lagos.</em></h1>
           <p className="shop-hero-description">Frozen fish, turkey and chicken, priced per kg. Pick a delivery slot that works for you and we bring it cold to your door.</p>
-          <Link href="/shop" className="button button-gold">Order now <ArrowRight aria-hidden="true" /></Link>
+          <div className="hero-cta-row">
+            <Link href="/shop" className="button button-gold">Order now <ArrowRight aria-hidden="true" /></Link>
+            <PlayMusicButton variant="hero" />
+          </div>
           <p className="delivery-note">Delivery across Lagos, except Ikorodu. Open every day, 8:30 AM to 9:00 PM.</p>
         </div>
         <div className="shop-hero-art">

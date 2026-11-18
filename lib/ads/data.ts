@@ -11,6 +11,7 @@ export type AdView = {
   href: string;
   external: boolean;
   imageSrc: string | null;
+  trackId?: string | null;
 };
 
 export const adImageSrc = (path: string | null) => (path ? `/api/ads/image?p=${encodeURIComponent(path)}` : null);
@@ -31,7 +32,7 @@ export async function liveCampaigns(placement: AdPlacement): Promise<AdView[]> {
       const s = r.trackId ? slug.get(r.trackId) : undefined;
       const href = s ? `/sounds/${s}` : r.linkUrl;
       if (!href) continue;
-      out.push({ id: r.id, placement: r.placement, artistName: r.artistName, headline: r.headline, tagline: r.tagline, href, external: !s, imageSrc: adImageSrc(r.imagePath) });
+      out.push({ id: r.id, placement: r.placement, artistName: r.artistName, headline: r.headline, tagline: r.tagline, href, external: !s, imageSrc: adImageSrc(r.imagePath), trackId: s ? r.trackId : null });
     }
     return out;
   } catch (e) {

@@ -5,6 +5,7 @@ import Image from "next/image";
 import { usePathname } from "next/navigation";
 import type { AdView } from "@/lib/ads/data";
 import { recordAd } from "@/lib/ads/client";
+import { AdPlay } from "@/components/ads/ad-play";
 
 const SEEN = "fish-guy-ad-popup-v1";
 
@@ -51,7 +52,8 @@ export function AdPopup() {
         <p className="ad-label">Sponsored · {ad.artistName}</p>
         <h3>{ad.headline}</h3>
         {ad.tagline && <p className="ad-tagline">{ad.tagline}</p>}
-        <a className="button button-gold" href={ad.href} {...(ad.external ? { target: "_blank", rel: "sponsored noopener noreferrer" } : {})} onClick={() => recordAd(ad.id, "CLICK")}>Listen now</a>
+        {ad.trackId && <AdPlay trackId={ad.trackId} adId={ad.id} />}
+        <a className={ad.trackId ? "button button-outline" : "button button-gold"} href={ad.href} {...(ad.external ? { target: "_blank", rel: "sponsored noopener noreferrer" } : {})} onClick={() => recordAd(ad.id, "CLICK")}>{ad.trackId ? "Track page" : "Listen now"}</a>
       </div>
     </div>
   );

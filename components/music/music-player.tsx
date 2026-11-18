@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { Pause, Play, SkipForward, Volume2, VolumeX } from 'lucide-react'
+import { Pause, Play, Shuffle, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react'
 import type { MusicTrack } from '@/lib/music/data'
 import { formatDuration } from '@/lib/music/format'
 import { CoverArtwork } from '@/components/music/site-shell'
@@ -9,13 +9,22 @@ import { CoverArtwork } from '@/components/music/site-shell'
 type MusicPlayerContextValue = {
   currentTrack: MusicTrack | null
   isPlaying: boolean
+  isShuffle: boolean
+  isStarting: boolean
+  notice: string
   currentTime: number
   duration: number
   volume: number
   isMuted: boolean
   playTrack: (track: MusicTrack, queue: MusicTrack[]) => void
+  /** Start the house playlist (your shop playlist, or free tracks). Returns false when there is no music yet. */
+  startQueue: () => Promise<boolean>
+  /** Play one track by id, e.g. a track an artist is promoting. */
+  playById: (id: string) => Promise<boolean>
   togglePlayback: () => void
   playNext: () => void
+  playPrevious: () => void
+  toggleShuffle: () => void
   toggleMute: () => void
   setVolume: (value: number) => void
   seek: (value: number) => void
@@ -23,25 +32,42 @@ type MusicPlayerContextValue = {
 
 const MusicPlayerContext = createContext<MusicPlayerContextValue | null>(null)
 const MUTE_PREFERENCE_KEY = 'fish-guy-sounds-muted-v1'
+// A one-frame silent clip. Playing it inside the tap unlocks audio on iPhones before the real track has loaded.
+const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='
 
 export function MusicPlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const playedTrackIds = useRef(new Set<string>())
+  const currentRef = useRef<MusicTrack | null>(null)
+  const errorStreak = useRef(0)
   const [currentTrack, setCurrentTrack] = useState<MusicTrack | null>(null)
   const [queue, setQueue] = useState<MusicTrack[]>([])
+  const [defaultQueue, setDefaultQueue] = useState<MusicTrack[] | null>(null)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [isShuffle, setIsShuffle] = useState(false)
+  const [isStarting, setIsStarting] = useState(false)
+  const [notice, setNotice] = useState('')
   const [currentTime, setCurrentTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [volume, setVolumeState] = useState(0.78)
   const [isMuted, setIsMuted] = useState(false)
 
+  useEffect(() => { currentRef.current = currentTrack }, [currentTrack])
+
+  const say = useCallback((text: string) => {
+    setNotice(text)
+    window.setTimeout(() => setNotice((n) => (n === text ? '' : n)), 4500)
+  }, [])
+
   const playTrack = useCallback((track: MusicTrack, nextQueue: MusicTrack[]) => {
     const audio = audioRef.current
+    currentRef.current = track
     setCurrentTrack(track)
     setQueue(nextQueue.length ? nextQueue : [track])
     setCurrentTime(0)
     setDuration(0)
     setIsPlaying(true)
+    setNotice('')
 
     if (!audio) return
     audio.pause()
@@ -50,6 +76,79 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     audio.load()
     void audio.play().catch(() => setIsPlaying(false))
   }, [])
+
+  const prime = useCallback(() => {
+    const audio = audioRef.current
+    if (!audio || audio.getAttribute('src')) return
+    audio.src = SILENT
+    void audio.play().catch(() => undefined)
+  }, [])
+
+  const unprime = useCallback(() => {
+    const audio = audioRef.current
+    if (!audio || currentRef.current) return
+    audio.pause()
+    audio.removeAttribute('src')
+    audio.load()
+    setIsPlaying(false)
+  }, [])
+
+  const loadQueue = useCallback(async (query = ''): Promise<MusicTrack[]> => {
+    const res = await fetch(`/api/music/queue${query}`, { cache: 'no-store' })
+    const json = (await res.json()) as { tracks?: MusicTrack[] }
+    return json.tracks ?? []
+  }, [])
+
+  // Warm up the house playlist shortly after the page loads, so the first tap on Play starts instantly.
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      loadQueue().then(setDefaultQueue).catch(() => setDefaultQueue([]))
+    }, 1200)
+    return () => window.clearTimeout(timer)
+  }, [loadQueue])
+
+  const startQueue = useCallback(async () => {
+    if (defaultQueue && defaultQueue.length) {
+      playTrack(defaultQueue[0], defaultQueue)
+      return true
+    }
+    if (defaultQueue && defaultQueue.length === 0) {
+      say('No music is published yet. Check back soon.')
+      return false
+    }
+    prime()
+    setIsStarting(true)
+    try {
+      const tracks = await loadQueue()
+      setDefaultQueue(tracks)
+      if (!tracks.length) { unprime(); say('No music is published yet. Check back soon.'); return false }
+      playTrack(tracks[0], tracks)
+      return true
+    } catch {
+      unprime()
+      say('Could not load the music. Check your connection.')
+      return false
+    } finally {
+      setIsStarting(false)
+    }
+  }, [defaultQueue, loadQueue, playTrack, prime, say, unprime])
+
+  const playById = useCallback(async (id: string) => {
+    prime()
+    setIsStarting(true)
+    try {
+      const [track] = await loadQueue(`?id=${encodeURIComponent(id)}`)
+      if (!track) { unprime(); say('That track is not available right now.'); return false }
+      playTrack(track, defaultQueue && defaultQueue.length ? [track, ...defaultQueue.filter((t) => t.id !== track.id)] : [track])
+      return true
+    } catch {
+      unprime()
+      say('Could not load that track.')
+      return false
+    } finally {
+      setIsStarting(false)
+    }
+  }, [defaultQueue, loadQueue, playTrack, prime, say, unprime])
 
   const resumePlayback = useCallback(() => {
     const audio = audioRef.current
@@ -67,21 +166,35 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     else pausePlayback()
   }, [pausePlayback, resumePlayback])
 
+  const pick = useCallback((direction: 1 | -1) => {
+    if (!currentTrack || queue.length < 2) return null
+    if (isShuffle && direction === 1) {
+      const pool = queue.filter((t) => t.id !== currentTrack.id)
+      return pool[Math.floor(Math.random() * pool.length)] ?? null
+    }
+    const index = queue.findIndex((t) => t.id === currentTrack.id)
+    return queue[(index + direction + queue.length) % queue.length] ?? null
+  }, [currentTrack, isShuffle, queue])
+
   const playNext = useCallback(() => {
-    if (!currentTrack || queue.length < 2) return
-    const currentIndex = queue.findIndex((track) => track.id === currentTrack.id)
-    const nextTrack = queue[(currentIndex + 1) % queue.length]
-    if (nextTrack) playTrack(nextTrack, queue)
-  }, [currentTrack, playTrack, queue])
+    const next = pick(1)
+    if (next) playTrack(next, queue)
+  }, [pick, playTrack, queue])
+
+  const playPrevious = useCallback(() => {
+    const audio = audioRef.current
+    if (audio && audio.currentTime > 3) { audio.currentTime = 0; return }
+    const previous = pick(-1)
+    if (previous) playTrack(previous, queue)
+    else if (audio) audio.currentTime = 0
+  }, [pick, playTrack, queue])
+
+  const toggleShuffle = useCallback(() => setIsShuffle((v) => !v), [])
 
   const toggleMute = useCallback(() => {
     setIsMuted((previous) => {
       const next = !previous
-      try {
-        window.localStorage.setItem(MUTE_PREFERENCE_KEY, String(next))
-      } catch {
-        // The player still works if browser storage is unavailable.
-      }
+      try { window.localStorage.setItem(MUTE_PREFERENCE_KEY, String(next)) } catch { /* storage unavailable */ }
       return next
     })
   }, [])
@@ -91,11 +204,7 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     setVolumeState(safeValue)
     if (safeValue > 0) {
       setIsMuted(false)
-      try {
-        window.localStorage.setItem(MUTE_PREFERENCE_KEY, 'false')
-      } catch {
-        // The player still works if browser storage is unavailable.
-      }
+      try { window.localStorage.setItem(MUTE_PREFERENCE_KEY, 'false') } catch { /* storage unavailable */ }
     }
   }, [])
 
@@ -104,11 +213,7 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
   }, [])
 
   useEffect(() => {
-    try {
-      setIsMuted(window.localStorage.getItem(MUTE_PREFERENCE_KEY) === 'true')
-    } catch {
-      setIsMuted(false)
-    }
+    try { setIsMuted(window.localStorage.getItem(MUTE_PREFERENCE_KEY) === 'true') } catch { setIsMuted(false) }
   }, [])
 
   useEffect(() => {
@@ -129,24 +234,19 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
       navigator.mediaSession.setActionHandler('play', () => resumePlayback())
       navigator.mediaSession.setActionHandler('pause', () => pausePlayback())
       navigator.mediaSession.setActionHandler('nexttrack', () => playNext())
-      navigator.mediaSession.setActionHandler('seekto', (event) => {
-        if (typeof event.seekTime === 'number') seek(event.seekTime)
-      })
-    } catch {
-      return
-    }
-
+      navigator.mediaSession.setActionHandler('previoustrack', () => playPrevious())
+      navigator.mediaSession.setActionHandler('seekto', (event) => { if (typeof event.seekTime === 'number') seek(event.seekTime) })
+    } catch { return }
     return () => {
       try {
         navigator.mediaSession.setActionHandler('play', null)
         navigator.mediaSession.setActionHandler('pause', null)
         navigator.mediaSession.setActionHandler('nexttrack', null)
+        navigator.mediaSession.setActionHandler('previoustrack', null)
         navigator.mediaSession.setActionHandler('seekto', null)
-      } catch {
-        return
-      }
+      } catch { return }
     }
-  }, [currentTrack, pausePlayback, playNext, resumePlayback, seek])
+  }, [currentTrack, pausePlayback, playNext, playPrevious, resumePlayback, seek])
 
   const recordCurrentPlay = () => {
     if (!currentTrack || playedTrackIds.current.has(currentTrack.id)) return
@@ -156,29 +256,38 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
 
   const onTimeUpdate = () => {
     const audio = audioRef.current
-    if (!audio) return
+    if (!audio || !currentRef.current) return
     setCurrentTime(audio.currentTime)
     if (Number.isFinite(audio.duration)) setDuration(audio.duration)
     if (audio.currentTime >= 30) recordCurrentPlay()
   }
 
   const onEnded = () => {
+    if (!currentRef.current) return
     if ((audioRef.current?.currentTime ?? 0) >= 30) recordCurrentPlay()
-    if (queue.length > 1) {
-      const currentIndex = queue.findIndex((track) => track.id === currentTrack?.id)
-      const nextTrack = queue[(currentIndex + 1) % queue.length]
-      if (nextTrack) {
-        playTrack(nextTrack, queue)
-        return
-      }
-    }
+    const next = pick(1)
+    if (next) { playTrack(next, queue); return }
     setIsPlaying(false)
   }
 
+  // A track that fails to load is skipped, but never in an endless loop.
+  const onError = () => {
+    if (!currentRef.current) return
+    errorStreak.current += 1
+    if (errorStreak.current < Math.max(1, queue.length)) {
+      const next = pick(1)
+      if (next) { playTrack(next, queue); return }
+    }
+    errorStreak.current = 0
+    setIsPlaying(false)
+    say('That track could not be played.')
+  }
+
   const value = useMemo(() => ({
-    currentTrack, isPlaying, currentTime, duration, volume, isMuted,
-    playTrack, togglePlayback, playNext, toggleMute, setVolume, seek,
-  }), [currentTrack, isPlaying, currentTime, duration, volume, isMuted, playTrack, togglePlayback, playNext, toggleMute, setVolume, seek])
+    currentTrack, isPlaying, isShuffle, isStarting, notice, currentTime, duration, volume, isMuted,
+    playTrack, startQueue, playById, togglePlayback, playNext, playPrevious, toggleShuffle, toggleMute, setVolume, seek,
+  }), [currentTrack, isPlaying, isShuffle, isStarting, notice, currentTime, duration, volume, isMuted,
+    playTrack, startQueue, playById, togglePlayback, playNext, playPrevious, toggleShuffle, toggleMute, setVolume, seek])
 
   return (
     <MusicPlayerContext.Provider value={value}>
@@ -187,10 +296,12 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
         ref={audioRef}
         preload="none"
         onTimeUpdate={onTimeUpdate}
-        onLoadedMetadata={() => { if (audioRef.current && Number.isFinite(audioRef.current.duration)) setDuration(audioRef.current.duration) }}
-        onPlay={() => setIsPlaying(true)}
-        onPause={() => setIsPlaying(false)}
+        onLoadedMetadata={() => { if (currentRef.current && audioRef.current && Number.isFinite(audioRef.current.duration)) setDuration(audioRef.current.duration) }}
+        onPlaying={() => { errorStreak.current = 0; if (currentRef.current) setIsPlaying(true) }}
+        onPlay={() => { if (currentRef.current) setIsPlaying(true) }}
+        onPause={() => { if (currentRef.current) setIsPlaying(false) }}
         onEnded={onEnded}
+        onError={onError}
       />
     </MusicPlayerContext.Provider>
   )
@@ -202,28 +313,41 @@ export function useMusicPlayer() {
   return context
 }
 
+/** The player bar is always on screen, so there is always a Play button. */
 export function MiniPlayer() {
-  const { currentTrack, isPlaying, currentTime, duration, volume, isMuted, togglePlayback, playNext, toggleMute, setVolume, seek } = useMusicPlayer()
+  const { currentTrack, isPlaying, isShuffle, isStarting, notice, currentTime, duration, volume, isMuted, togglePlayback, startQueue, playNext, playPrevious, toggleShuffle, toggleMute, setVolume, seek } = useMusicPlayer()
   const maxDuration = duration || currentTrack?.durationSeconds || 0
-
-  if (!currentTrack) return null
+  const onPlay = () => { if (currentTrack) togglePlayback(); else void startQueue() }
 
   return (
     <aside className="mini-player" aria-label="Music player">
       <div className="player-track">
-        <CoverArtwork src={currentTrack.coverImageUrl} alt={`${currentTrack.title} cover art`} className="player-cover" />
-        <div className="player-track-copy"><strong>{currentTrack.title}</strong><span>{currentTrack.artistName}</span></div>
+        {currentTrack ? (
+          <>
+            <CoverArtwork src={currentTrack.coverImageUrl} alt={`${currentTrack.title} cover art`} className="player-cover" />
+            <div className="player-track-copy"><strong>{currentTrack.title}</strong><span>{currentTrack.artistName}</span></div>
+          </>
+        ) : (
+          <div className="player-empty" aria-live="polite">
+            <strong>Fish Guy Sounds</strong>
+            <span>{notice || (isStarting ? 'Loading the music…' : 'Press play for music while you shop')}</span>
+          </div>
+        )}
       </div>
-      <div className="player-controls">
-        <button className="player-icon-button player-play-button" type="button" aria-label={isPlaying ? 'Pause music' : 'Play music'} onClick={togglePlayback}>
-          {isPlaying ? <Pause fill="currentColor" aria-hidden="true" /> : <Play fill="currentColor" aria-hidden="true" />}
-        </button>
-        <button className="player-icon-button" type="button" aria-label="Play next track" onClick={playNext}><SkipForward aria-hidden="true" /></button>
-      </div>
-      <div className="player-progress">
-        <span>{formatDuration(Math.floor(currentTime))}</span>
-        <input aria-label="Track position" type="range" min="0" max={maxDuration || 1} step="1" value={Math.min(currentTime, maxDuration || 0)} disabled={!duration} onChange={(event) => seek(Number(event.target.value))} />
-        <span>{formatDuration(Math.floor(maxDuration))}</span>
+      <div className="player-center">
+        <div className="player-controls">
+          <button className={`player-icon-button ${isShuffle ? 'is-on' : ''}`} type="button" aria-label="Shuffle" aria-pressed={isShuffle} onClick={toggleShuffle}><Shuffle aria-hidden="true" /></button>
+          <button className="player-icon-button" type="button" aria-label="Previous track" disabled={!currentTrack} onClick={playPrevious}><SkipBack aria-hidden="true" /></button>
+          <button className="player-icon-button player-play-button" type="button" aria-label={isPlaying ? 'Pause music' : 'Play music'} disabled={isStarting} onClick={onPlay}>
+            {isPlaying ? <Pause fill="currentColor" aria-hidden="true" /> : <Play fill="currentColor" aria-hidden="true" />}
+          </button>
+          <button className="player-icon-button" type="button" aria-label="Next track" disabled={!currentTrack} onClick={playNext}><SkipForward aria-hidden="true" /></button>
+        </div>
+        <div className="player-progress">
+          <span>{formatDuration(Math.floor(currentTime))}</span>
+          <input aria-label="Track position" type="range" min="0" max={maxDuration || 1} step="1" value={Math.min(currentTime, maxDuration || 0)} disabled={!currentTrack || !duration} onChange={(event) => seek(Number(event.target.value))} />
+          <span>{formatDuration(Math.floor(maxDuration))}</span>
+        </div>
       </div>
       <div className="player-volume">
         <button className="player-icon-button" type="button" aria-label={isMuted ? 'Unmute music' : 'Mute music'} onClick={toggleMute}>
