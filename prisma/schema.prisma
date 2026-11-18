@@ -198,6 +198,9 @@ model StoreSettings {
   studentDiscountPercent Int      @default(0) // 0 = student discount is off
   studentDiscountMaxKobo Int? // optional cap per order, in kobo
   studentValidityDays    Int      @default(365)
+  heroImageUrl           String?
+  heroCaption            String?
+  heroAlt                String?
 }
 // ---- FISH GUY SOUNDS: paste this block at the END of prisma/schema.prisma ----
 
@@ -374,6 +377,7 @@ enum AdPlacement {
   POPUP
   STICKER
   FEATURED_STRIP
+  HERO_BANNER
   BAG_INSERT
 }
 

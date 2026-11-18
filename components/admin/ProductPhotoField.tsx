@@ -18,7 +18,7 @@ async function shrink(file: File): Promise<Blob> {
   return (await toBlob("image/webp", 0.85)) ?? (await toBlob("image/jpeg", 0.85)) ?? Promise.reject(new Error("no blob"));
 }
 
-export default function ProductPhotoField({ initial }: { initial: string }) {
+export default function ProductPhotoField({ initial, title = "Product photo" }: { initial: string; title?: string }) {
   const [url, setUrl] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -44,7 +44,7 @@ export default function ProductPhotoField({ initial }: { initial: string }) {
 
   return (
     <div>
-      <span className={label}>Product photo</span>
+      <span className={label}>{title}</span>
       <input type="hidden" name="imageUrl" value={url} />
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex h-28 w-28 items-center justify-center overflow-hidden rounded-lg border border-white/15 bg-[#0A0A0A] text-xs text-[#9A9585]">

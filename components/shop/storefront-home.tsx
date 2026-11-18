@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Beef, Clock3, CookingPot, Drumstick, Fish, MapPin, Package, Shell } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
@@ -9,6 +8,8 @@ import { ShopEmptyState } from "@/components/shop/shop-empty-state";
 import { ProductCard } from "@/components/shop/product-card";
 import { SponsoredStrip } from "@/components/ads/sponsored-strip";
 import type { AdView } from "@/lib/ads/data";
+import { HomeHeroArt } from "@/components/shop/home-hero-art";
+import { DEFAULT_HERO, type Hero } from "@/lib/site-hero";
 
 const iconFor = (label: string): LucideIcon => {
   const l = label.toLowerCase();
@@ -30,12 +31,16 @@ export function StorefrontHome({
   categories,
   freeTracks,
   sponsored = null,
+  hero = DEFAULT_HERO,
+  heroAd = null,
   studentPercent = 0,
 }: {
   products: ShopProduct[];
   categories: { label: string; slug: string; count: number }[];
   freeTracks: MusicTrack[];
   sponsored?: AdView | null;
+  hero?: Hero;
+  heroAd?: AdView | null;
   studentPercent?: number;
 }) {
   return (
@@ -49,8 +54,7 @@ export function StorefrontHome({
           <p className="delivery-note">Delivery across Lagos, except Ikorodu. Open every day, 8:30 AM to 9:00 PM.</p>
         </div>
         <div className="shop-hero-art">
-          <Image src="/frozen-food-hero.png" alt="Vacuum-sealed frozen fish and prawns on crushed ice" fill priority sizes="(max-width: 680px) 100vw, 54vw" />
-          <span className="hero-art-caption">FROZEN WITH CARE · LAGOS</span>
+          <HomeHeroArt hero={hero} ad={heroAd} />
         </div>
       </section>
 

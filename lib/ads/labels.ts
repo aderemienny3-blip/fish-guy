@@ -1,11 +1,12 @@
 // Safe to import in the browser (no database).
-export const PLACEMENTS = ["POPUP", "STICKER", "FEATURED_STRIP", "BAG_INSERT"] as const;
+export const PLACEMENTS = ["POPUP", "STICKER", "FEATURED_STRIP", "HERO_BANNER", "BAG_INSERT"] as const;
 export type Placement = (typeof PLACEMENTS)[number];
 
 export const PLACEMENT_INFO: Record<Placement, { label: string; blurb: string; imageRequired: boolean }> = {
   POPUP: { label: "Popup spotlight", blurb: "A card that opens once per visit on the home page and shop, like a streaming-app ad.", imageRequired: true },
   STICKER: { label: "Sponsored sticker", blurb: "Your song is tagged on the most-ordered products in the shop.", imageRequired: false },
   FEATURED_STRIP: { label: "Featured sound strip", blurb: "A banner with your cover art near the top of the home page.", imageRequired: true },
+  HERO_BANNER: { label: "Homepage hero image", blurb: "Your artwork takes over the big image on the home page, labelled Sponsored. Landscape artwork works best.", imageRequired: true },
   BAG_INSERT: { label: "Bag insert", blurb: "Your printed card goes inside customers' delivery bags.", imageRequired: true },
 };
 

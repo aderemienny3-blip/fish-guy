@@ -17,6 +17,7 @@ const NAV: { href: string; label: string; roles: AdminRole[]; exact?: boolean }[
   { href: "/admin/delivery", label: "Delivery", roles: MGR },
   { href: "/admin/customers", label: "Customers", roles: MGR },
   { href: "/admin/students", label: "Students", roles: MGR },
+  { href: "/admin/homepage", label: "Homepage", roles: MGR },
   { href: "/admin/ads", label: "Ads", roles: MGR },
   { href: "/admin/music", label: "Music", roles: MGR },
   { href: "/admin/team", label: "Team", roles: ["OWNER"] },

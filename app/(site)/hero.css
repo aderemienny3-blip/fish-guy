@@ -1,0 +1,6 @@
+.site-root .hero-ad-link { position: absolute; inset: 0; z-index: 1; display: flex; align-items: flex-end; color: #f5f1e6; text-decoration: none; }
+.site-root .hero-ad-caption { position: relative; z-index: 2; display: grid; gap: 3px; width: 100%; padding: 22px; background: linear-gradient(0deg, rgba(10,10,10,.92), rgba(10,10,10,0)); }
+.site-root .hero-ad-caption small { color: #cfc9b6; font-size: 11px; letter-spacing: .14em; text-transform: uppercase; }
+.site-root .hero-ad-caption strong { font-family: Georgia, 'Times New Roman', serif; font-size: 26px; font-weight: 400; }
+.site-root .hero-ad-caption span { color: #cfc9b6; font-size: 14px; }
+.site-root .hero-ad-caption em { color: #d4af37; font-style: normal; font-size: 14px; margin-top: 4px; }

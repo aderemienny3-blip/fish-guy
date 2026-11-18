@@ -4,6 +4,7 @@ import { SiteFooter, SiteHeader } from "@/components/music/site-shell";
 import { CartProvider } from "@/components/shop/cart";
 import { AdPopup } from "@/components/ads/ad-popup";
 import "./ads.css";
+import "./hero.css";
 import { PwaBoot } from "@/components/shop/pwa";
 import "./site.css";
 
