@@ -2,11 +2,13 @@ import type { Metadata, Viewport } from "next";
 import { MiniPlayer, MusicPlayerProvider } from "@/components/music/music-player";
 import { SiteFooter, SiteHeader } from "@/components/music/site-shell";
 import { CartProvider } from "@/components/shop/cart";
+import { FestivePopup, FestiveRibbon } from "@/components/shop/festive-popup";
 import { AdPopup } from "@/components/ads/ad-popup";
 import "./ads.css";
 import "./hero.css";
 import { PwaBoot } from "@/components/shop/pwa";
 import "./site.css";
+import "./festive.css";
 import "./artist-page.css";
 import "./addons.css";
 import "./music-play.css";
@@ -28,11 +30,13 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
       <CartProvider>
         <MusicPlayerProvider>
           <div className="site-shell">
+            <FestiveRibbon />
             <SiteHeader />
             {children}
             <SiteFooter />
           </div>
           <MiniPlayer />
+          <FestivePopup />
           <AdPopup />
           <PwaBoot />
         </MusicPlayerProvider>

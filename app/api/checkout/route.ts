@@ -7,11 +7,13 @@ import { initTransaction } from "@/lib/monnify";
 import { normalizeNgPhone } from "@/lib/phone";
 import { deliveryFeeFor, isSlotBookable } from "@/lib/delivery";
 import { discountFor, findUsableVerification, getStudentRules } from "@/lib/student";
+import { loadLivePromo } from "@/lib/festive";
+import { MAX_QTY, cartonsOf, evaluatePromo, resolveDiscounts } from "@/lib/festive-math";
 
 const HOLD_MINUTES = 30;
 
 const Body = z.object({
-  items: z.array(z.object({ productId: z.string(), quantity: z.number().int().min(1).max(50) })).min(1),
+  items: z.array(z.object({ productId: z.string(), quantity: z.number().int().min(1).max(MAX_QTY) })).min(1),
   name: z.string().trim().min(2),
   email: z.string().trim().email(),
   phone: z.string(),
@@ -91,6 +93,8 @@ export async function POST(req: Request) {
       if (products.length !== qtyById.size) throw new CheckoutError("An item in your cart is no longer available.");
 
       let subtotal = 0;
+      let cartonValue = 0;
+      const cartonLines: { qty: number; cartonKg: number | null }[] = [];
       for (const p of products) {
         const qty = qtyById.get(p.id)!;
         // Conditional decrement: succeeds only if enough stock remains (race-safe).
@@ -100,11 +104,26 @@ export async function POST(req: Request) {
         });
         if (r.count === 0) throw new CheckoutError(`Sorry, ${p.name} doesn't have enough stock.`);
         subtotal += p.priceKobo * qty;
+        if (p.unit === "kg" && p.cartonKg) {
+          cartonLines.push({ qty, cartonKg: p.cartonKg });
+          cartonValue += p.priceKobo * qty;
+        }
       }
 
-      const discount = studentVerificationId ? discountFor(subtotal, studentPercent, studentMax) : 0;
-      // Free-delivery threshold is judged on the food total before the student discount.
-      const deliveryFee = deliveryFeeFor(zone, subtotal);
+      // Festive carton deal: worked out here from the database, never from the browser.
+      const promo = await loadLivePromo(tx);
+      const deal = promo ? evaluatePromo(promo, cartonsOf(cartonLines), cartonValue) : null;
+
+      const studentRaw = studentVerificationId ? discountFor(subtotal, studentPercent, studentMax) : 0;
+      const { promoKobo, studentKobo } = resolveDiscounts({
+        subtotalKobo: subtotal,
+        promoKobo: deal?.discountKobo ?? 0,
+        studentKobo: studentRaw,
+        stack: promo?.stackWithStudent ?? false,
+      });
+      const discount = studentKobo;
+      // Store pickup is always free. Otherwise the free-delivery threshold is judged on the food total before discounts.
+      const deliveryFee = zone.isPickup || deal?.freeDelivery ? 0 : deliveryFeeFor(zone, subtotal);
 
       return tx.order.create({
         data: {
@@ -113,8 +132,8 @@ export async function POST(req: Request) {
           contactName: b.name,
           contactEmail: b.email,
           contactPhone: phone,
-          addressLine: b.addressLine,
-          landmark: b.landmark || null,
+          addressLine: zone.isPickup ? "Store pickup" : b.addressLine,
+          landmark: zone.isPickup ? null : b.landmark || null,
           notes: b.notes || null,
           zoneId: zone.id,
           slotId: slot.id,
@@ -123,7 +142,9 @@ export async function POST(req: Request) {
           deliveryFeeKobo: deliveryFee,
           discountKobo: discount,
           studentVerificationId: discount > 0 ? studentVerificationId : null,
-          totalKobo: subtotal - discount + deliveryFee,
+          promoDiscountKobo: promoKobo,
+          giftName: deal?.gift ?? null,
+          totalKobo: subtotal - discount - promoKobo + deliveryFee,
           expiresAt: new Date(Date.now() + HOLD_MINUTES * 60 * 1000),
           items: {
             create: products.map((p) => ({

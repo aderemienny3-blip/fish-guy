@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Minus, Plus, ShoppingBag, X } from "lucide-react";
 import { naira } from "@/lib/shop/format";
 import { useCart } from "@/components/shop/cart";
+import { PromoProgress } from "@/components/shop/promo-progress";
 import { CartAddOns } from "@/components/shop/addon-shelf";
 
 export function CartDrawer() {
@@ -65,6 +66,8 @@ export function CartDrawer() {
           )}
 
           {lines.length > 0 && <CartAddOns />}
+
+          {lines.length > 0 && <PromoProgress />}
 
           <div className="cart-drawer-footer">
             <div className="cart-subtotal"><span>Subtotal</span><strong>{naira(subtotalKobo)}</strong></div>

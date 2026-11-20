@@ -6,7 +6,7 @@ export const BUSINESS = {
   name: "Fish Guy",
   legalName: "", // registered name, e.g. "Fish Guy Foods Ltd". Leave empty if unregistered.
   cacNumber: "", // e.g. "RC 1234567"
-  address: "", // business address
+  address: "", //address: "14 Koloba Road, off Bada Palace, Ayobo, Ipaja, Lagos", // business address
   phone: "", // e.g. "0801 234 5678"
   whatsapp: "", // digits only with country code, e.g. "2348012345678"
   email: "", // customer support email

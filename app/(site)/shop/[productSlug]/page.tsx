@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AddToCart } from "@/components/shop/add-to-cart";
+import { CartonButton } from "@/components/shop/carton-button";
 import { ProductImage, stockLabel } from "@/components/shop/product-card";
 import { getProductBySlug } from "@/lib/shop/data";
 import { getAddOns } from "@/lib/shop/addons";
@@ -44,6 +45,7 @@ export default async function ProductPage({ params }: Props) {
           {p.description && <p className="product-detail-description">{p.description}</p>}
           {low && <p className={`product-stock ${p.stockQty <= 0 ? "is-out" : ""}`}>{low}</p>}
           <AddToCart product={p} withQuantity />
+          {p.cartonKg && p.unit === "kg" && <CartonButton product={p} cartonKg={p.cartonKg} />}
           <ul className="product-facts">
             <li>Delivered cold across Lagos, except Ikorodu</li>
             <li>Choose your day and time slot at checkout</li>

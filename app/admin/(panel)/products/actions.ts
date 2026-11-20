@@ -42,6 +42,7 @@ export async function saveProduct(fd: FormData) {
     packSizeG,
     stockQty,
     active: fd.get("active") === "on",
+    cartonKg: (() => { const n = Math.round(Number(str(fd, "cartonKg"))); return Number.isFinite(n) && n >= 1 && n <= 100 ? n : null; })(),
     isAddOn: fd.get("isAddOn") === "on",
   };
 

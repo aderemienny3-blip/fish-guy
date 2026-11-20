@@ -6,7 +6,7 @@ import { useCart } from "@/components/shop/cart";
 
 type P = { id: string; slug: string; name: string; priceKobo: number; unit: string; imageUrl: string | null; stockQty: number };
 
-const MAX_PER_ORDER = 50;
+const MAX_PER_ORDER = 200;
 
 export function AddToCart({ product, withQuantity = false }: { product: P; withQuantity?: boolean }) {
   const { add, setOpen, lines } = useCart();

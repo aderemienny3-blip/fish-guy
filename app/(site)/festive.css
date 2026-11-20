@@ -1,0 +1,51 @@
+/* Festive carton deals: ribbon, pop-up, /festive page, cart progress, checkout choices */
+.site-root .festive-ribbon { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 9px 16px; background: #d4af37; color: #0a0a0a; font-size: 12px; text-align: center; }
+.site-root .festive-ribbon svg { width: 15px; height: 15px; flex: none; }
+.site-root .festive-ribbon strong { font-weight: 700; }
+.site-root .festive-ribbon:hover { background: #f5c84c; }
+.site-root .festive-backdrop { position: fixed; inset: 0; z-index: 90; display: grid; place-items: center; padding: 20px; background: rgba(0,0,0,.72); }
+.site-root .festive-popup { position: relative; width: min(420px, 100%); padding: 32px 28px 24px; border: 1px solid #d4af37; background: #0f0f0d; text-align: center; display: grid; gap: 12px; }
+.site-root .festive-popup h3 { margin: 0; font-family: Georgia, 'Times New Roman', serif; font-size: 30px; font-weight: 400; }
+.site-root .festive-eyebrow { margin: 0; color: #d4af37; font-size: 11px; font-weight: 700; letter-spacing: .22em; }
+.site-root .festive-close { position: absolute; top: 8px; right: 8px; width: 44px; height: 44px; border: 0; background: transparent; color: #b4af9f; font-size: 18px; cursor: pointer; }
+.site-root .festive-popup-tiers { list-style: none; margin: 6px 0; padding: 0; display: grid; gap: 10px; }
+.site-root .festive-popup-tiers li { display: grid; gap: 2px; padding: 12px; border: 1px solid #29271f; background: rgba(212,175,55,.06); }
+.site-root .festive-popup-tiers strong { color: #f5c84c; font-size: 15px; }
+.site-root .festive-popup-tiers span { font-size: 14px; }
+.site-root .festive-popup-note { margin: 0; color: #9a9585; font-size: 12px; }
+.site-root .festive-later { min-height: 44px; border: 0; background: transparent; color: #9a9585; font-size: 13px; cursor: pointer; text-decoration: underline; }
+.site-root .festive-page { padding-top: 40px; }
+.site-root .festive-hero { padding: 40px 32px; border: 1px solid rgba(212,175,55,.35); background: radial-gradient(ellipse at 80% 0%, rgba(212,175,55,.18), transparent 55%), #121210; }
+.site-root .festive-hero h1 { margin: 6px 0 10px; font-family: Georgia, 'Times New Roman', serif; font-size: clamp(36px, 6vw, 60px); font-weight: 400; letter-spacing: -.04em; }
+.site-root .festive-lead { margin: 0 0 22px; color: #d6d1c2; font-size: 16px; max-width: 560px; }
+.site-root .festive-tiles { list-style: none; margin: 0 0 24px; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; }
+.site-root .festive-tiles li { display: grid; gap: 4px; padding: 18px; border: 1px solid #d4af37; background: rgba(10,10,10,.6); }
+.site-root .festive-tiles svg { width: 22px; height: 22px; color: #d4af37; margin-bottom: 4px; }
+.site-root .festive-tiles strong { font-size: 18px; }
+.site-root .festive-tiles span { color: #f5c84c; font-size: 15px; }
+.site-root .festive-hero-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.site-root .festive-section { margin-top: 52px; }
+.site-root .festive-section h2 { margin: 0 0 6px; font-family: Georgia, 'Times New Roman', serif; font-size: 28px; font-weight: 400; }
+.site-root .festive-sub { margin: 0 0 20px; color: #b4af9f; font-size: 14px; }
+.site-root .festive-steps { margin: 12px 0 0; padding-left: 20px; color: #d6d1c2; font-size: 15px; line-height: 1.8; }
+.site-root .festive-terms { margin-top: 40px; padding: 20px; border: 1px solid #29271f; color: #9a9585; font-size: 12px; }
+.site-root .festive-terms h3 { margin: 0 0 8px; color: #b4af9f; font-size: 12px; letter-spacing: .12em; text-transform: uppercase; }
+.site-root .festive-terms ul { margin: 0; padding-left: 18px; line-height: 1.8; }
+.site-root .carton-button { width: 100%; margin-top: 8px; }
+.site-root .promo-progress { display: flex; gap: 12px; margin: 0 22px 12px; padding: 12px; border: 1px solid rgba(212,175,55,.4); background: rgba(212,175,55,.07); font-size: 13px; }
+.site-root .promo-progress svg { flex: none; width: 20px; height: 20px; color: #d4af37; margin-top: 2px; }
+.site-root .promo-progress p { margin: 4px 0 0; color: #d6d1c2; }
+.site-root .promo-progress .promo-unlocked { color: #f5c84c; font-weight: 700; }
+.site-root .promo-progress a { display: inline-block; margin-top: 6px; color: #d4af37; text-decoration: underline; }
+.site-root .fulfil-choice { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.site-root .fulfil-choice label { display: flex; align-items: center; gap: 10px; padding: 14px; border: 1px solid #29271f; cursor: pointer; min-height: 52px; }
+.site-root .fulfil-choice input { accent-color: #d4af37; width: 18px; height: 18px; }
+.site-root .fulfil-choice label:has(input:checked) { border-color: #d4af37; background: rgba(212,175,55,.08); }
+.site-root .pickup-box { padding: 14px; border: 1px solid #29271f; background: #0f0f0d; font-size: 14px; line-height: 1.6; }
+.site-root .pickup-box strong { display: block; color: #d4af37; }
+.site-root .summary-gift dd { color: #f5c84c; font-weight: 700; }
+@media (max-width: 680px) {
+  .site-root .festive-hero { padding: 26px 20px; }
+  .site-root .festive-ribbon-detail { display: none; }
+  .site-root .fulfil-choice { grid-template-columns: 1fr; }
+}

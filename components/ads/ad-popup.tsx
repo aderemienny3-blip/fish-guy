@@ -26,7 +26,7 @@ export function AdPopup() {
         if (!list.length || cancelled) return;
         const pick = list[Math.floor(Math.random() * list.length)];
         timer = window.setTimeout(() => {
-          if (cancelled) return;
+          if (cancelled || document.querySelector(".festive-popup")) return;
           setAd(pick);
           try { window.sessionStorage.setItem(SEEN, "1"); } catch { /* ignore */ }
           recordAd(pick.id, "IMPRESSION");

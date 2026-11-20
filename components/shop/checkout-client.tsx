@@ -6,17 +6,19 @@ import { addDays, deliveryFeeFor, isSlotBookable } from "@/lib/delivery";
 import { naira } from "@/lib/shop/format";
 import { useCart } from "@/components/shop/cart";
 import { discountFor } from "@/lib/student-math";
+import { MAX_QTY, cartonsOf, evaluatePromo, resolveDiscounts, type PromoRules } from "@/lib/festive-math";
 
 const STUDENT_KEY = "fish-guy-student-v1";
 
 type Zone = { id: string; name: string; feeKobo: number; freeOverKobo: number | null };
 type Slot = { id: string; label: string; startMinute: number };
-type Live = { id: string; slug: string; name: string; priceKobo: number; unit: string; stockQty: number; imageUrl: string | null };
+type Live = { id: string; slug: string; name: string; priceKobo: number; unit: string; stockQty: number; imageUrl: string | null; cartonKg?: number | null };
+type Pickup = { id: string; address: string };
 
 const dayLabel = (iso: string) =>
   new Intl.DateTimeFormat("en-NG", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" }).format(new Date(iso + "T00:00:00Z"));
 
-export function CheckoutClient({ zones, slots, today, lastDay, student }: { zones: Zone[]; slots: Slot[]; today: string; lastDay: string; student: { percent: number; maxKobo: number | null } }) {
+export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, promo }: { zones: Zone[]; slots: Slot[]; today: string; lastDay: string; student: { percent: number; maxKobo: number | null }; pickup: Pickup | null; promo: PromoRules | null }) {
   const { lines, ready, remove, setQty } = useCart();
   const [live, setLive] = useState<Map<string, Live> | null>(null);
   const [zoneId, setZoneId] = useState(zones[0]?.id ?? "");
@@ -25,6 +27,8 @@ export function CheckoutClient({ zones, slots, today, lastDay, student }: { zone
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [studentRef, setStudentRef] = useState<string | null>(null);
+  const [mode, setMode] = useState<"delivery" | "pickup">(zones.length === 0 && pickup ? "pickup" : "delivery");
+  const isPickup = mode === "pickup" && !!pickup;
 
   // A saved student code is only used if the server confirms it is still active.
   useEffect(() => {
@@ -51,13 +55,13 @@ export function CheckoutClient({ zones, slots, today, lastDay, student }: { zone
   }, [ready, idsKey]);
 
   const { items, unavailable, subtotalKobo } = useMemo(() => {
-    const items: { productId: string; name: string; unit: string; priceKobo: number; quantity: number }[] = [];
+    const items: { productId: string; name: string; unit: string; priceKobo: number; quantity: number; cartonKg: number | null }[] = [];
     const unavailable: { productId: string; name: string }[] = [];
     if (live) {
       for (const l of lines) {
         const p = live.get(l.productId);
         if (!p || p.stockQty <= 0) { unavailable.push({ productId: l.productId, name: l.name }); continue; }
-        items.push({ productId: p.id, name: p.name, unit: p.unit, priceKobo: p.priceKobo, quantity: Math.min(l.qty, p.stockQty, 50) });
+        items.push({ productId: p.id, name: p.name, unit: p.unit, priceKobo: p.priceKobo, quantity: Math.min(l.qty, p.stockQty, MAX_QTY), cartonKg: p.unit === "kg" ? p.cartonKg ?? null : null });
       }
     }
     return { items, unavailable, subtotalKobo: items.reduce((n, i) => n + i.priceKobo * i.quantity, 0) };
@@ -76,9 +80,17 @@ export function CheckoutClient({ zones, slots, today, lastDay, student }: { zone
   const effectiveSlot = openSlots.some((s) => s.id === slotId) ? slotId : openSlots[0]?.id ?? "";
 
   const zone = zones.find((z) => z.id === zoneId) ?? zones[0];
-  const fee = zone ? deliveryFeeFor(zone, subtotalKobo) : 0;
-  const discount = studentRef ? discountFor(subtotalKobo, student.percent, student.maxKobo) : 0;
-  const total = subtotalKobo - discount + fee;
+  const cartonLines = items.map((i) => ({ qty: i.quantity, cartonKg: i.cartonKg }));
+  const deal = promo ? evaluatePromo(promo, cartonsOf(cartonLines), items.reduce((n, i) => n + (i.cartonKg ? i.priceKobo * i.quantity : 0), 0)) : null;
+  const { promoKobo, studentKobo } = resolveDiscounts({
+    subtotalKobo,
+    promoKobo: deal?.discountKobo ?? 0,
+    studentKobo: studentRef ? discountFor(subtotalKobo, student.percent, student.maxKobo) : 0,
+    stack: promo?.stackWithStudent ?? false,
+  });
+  const discount = studentKobo;
+  const fee = isPickup || deal?.freeDelivery ? 0 : zone ? deliveryFeeFor(zone, subtotalKobo) : 0;
+  const total = subtotalKobo - discount - promoKobo + fee;
 
   if (!ready) return <p className="utility-intro" role="status">Loading your cart…</p>;
 
@@ -94,7 +106,7 @@ export function CheckoutClient({ zones, slots, today, lastDay, student }: { zone
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
-    if (!items.length || !effectiveSlot || !effectiveDate) { setError("Choose a delivery day and time slot."); return; }
+    if (!items.length || !effectiveSlot || !effectiveDate) { setError(isPickup ? "Choose a pickup day and time." : "Choose a delivery day and time slot."); return; }
     setBusy(true);
     const f = new FormData(e.currentTarget);
     try {
@@ -106,10 +118,10 @@ export function CheckoutClient({ zones, slots, today, lastDay, student }: { zone
           name: f.get("name"),
           email: f.get("email"),
           phone: f.get("phone"),
-          addressLine: f.get("addressLine"),
-          landmark: f.get("landmark") || undefined,
+          addressLine: isPickup ? "Store pickup" : f.get("addressLine"),
+          landmark: isPickup ? undefined : f.get("landmark") || undefined,
           notes: f.get("notes") || undefined,
-          zoneId,
+          zoneId: isPickup && pickup ? pickup.id : zoneId,
           slotId: effectiveSlot,
           deliveryDate: effectiveDate,
           studentRef: studentRef ?? undefined,
@@ -134,31 +146,47 @@ export function CheckoutClient({ zones, slots, today, lastDay, student }: { zone
           <label className="span-2">Email for your receipt<input name="email" type="email" autoComplete="email" required /></label>
         </fieldset>
         <fieldset>
-          <legend>Delivery</legend>
-          <label className="span-2">Delivery address<input name="addressLine" autoComplete="street-address" required minLength={5} /></label>
-          <label>Nearest landmark (optional)<input name="landmark" /></label>
+          <legend>{pickup ? "Delivery or pickup" : "Delivery"}</legend>
+          {pickup && (
+            <div className="fulfil-choice span-2" role="radiogroup" aria-label="How do you want your order?">
+              <label><input type="radio" name="fulfil" checked={mode === "delivery"} disabled={zones.length === 0} onChange={() => setMode("delivery")} /> Deliver to me</label>
+              <label><input type="radio" name="fulfil" checked={mode === "pickup"} onChange={() => setMode("pickup")} /> Pick up at the store (free)</label>
+            </div>
+          )}
+          {isPickup && pickup ? (
+            <div className="pickup-box span-2">
+              <strong>Store pickup</strong>
+              {pickup.address ? <>Collect from: {pickup.address}</> : <>We will send you the pickup address and directions after you pay.</>}
+              <br />Bring your order reference. Please collect within your chosen time.
+            </div>
+          ) : (
+            <>
+              <label className="span-2">Delivery address<input name="addressLine" autoComplete="street-address" required minLength={5} /></label>
+              <label>Nearest landmark (optional)<input name="landmark" /></label>
+              <label>
+                Area (local government)
+                <select value={zoneId} onChange={(e) => setZoneId(e.target.value)}>
+                  {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
+                </select>
+              </label>
+            </>
+          )}
           <label>
-            Area (local government)
-            <select value={zoneId} onChange={(e) => setZoneId(e.target.value)}>
-              {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
-            </select>
-          </label>
-          <label>
-            Delivery day
+            {isPickup ? "Pickup day" : "Delivery day"}
             <select value={effectiveDate} onChange={(e) => setDate(e.target.value)} disabled={days.length === 0}>
               {days.map((d) => <option key={d} value={d}>{d === today ? "Today" : dayLabel(d)}</option>)}
             </select>
           </label>
           <label>
-            Time slot
+            {isPickup ? "Pickup time" : "Time slot"}
             <select value={effectiveSlot} onChange={(e) => setSlotId(e.target.value)} disabled={openSlots.length === 0}>
               {openSlots.map((s) => <option key={s.id} value={s.id}>{s.label}</option>)}
             </select>
           </label>
-          <label className="span-2">Note for the rider (optional)<input name="notes" maxLength={300} /></label>
-          <p className="field-note span-2">We deliver across Lagos, except Ikorodu. Slots need at least 2 hours to pack your order.</p>
+          <label className="span-2">{isPickup ? "Note for the store (optional)" : "Note for the rider (optional)"}<input name="notes" maxLength={300} /></label>
+          <p className="field-note span-2">{isPickup ? "Slots need at least 2 hours to pack your order." : "We deliver across Lagos, except Ikorodu. Slots need at least 2 hours to pack your order."}</p>
         </fieldset>
-        {days.length === 0 && <p className="form-message is-error" role="alert">No delivery slots are open right now. Please check back soon.</p>}
+        {days.length === 0 && <p className="form-message is-error" role="alert">No {isPickup ? "pickup" : "delivery"} slots are open right now. Please check back soon.</p>}
         {error && <p className="form-message is-error" role="alert">{error}</p>}
         <button className="button button-gold" type="submit" disabled={busy || items.length === 0 || days.length === 0}>
           {busy ? "Starting payment…" : `Pay ${naira(total)} securely`}
@@ -195,10 +223,14 @@ export function CheckoutClient({ zones, slots, today, lastDay, student }: { zone
         )}
         <dl className="summary-totals">
           <div><dt>Subtotal</dt><dd>{naira(subtotalKobo)}</dd></div>
+          {promoKobo > 0 && <div className="summary-discount"><dt>{promo?.title ?? "Festive deal"}</dt><dd>-{naira(promoKobo)}</dd></div>}
           {discount > 0 && <div className="summary-discount"><dt>Student discount ({student.percent}%)</dt><dd>-{naira(discount)}</dd></div>}
-          <div><dt>Delivery{zone ? ` (${zone.name})` : ""}</dt><dd>{fee === 0 && subtotalKobo > 0 ? "Free" : naira(fee)}</dd></div>
+          {deal?.gift && <div className="summary-gift"><dt>Free gift</dt><dd>{deal.gift}</dd></div>}
+          <div><dt>{isPickup ? "Store pickup" : `Delivery${zone ? ` (${zone.name})` : ""}`}</dt><dd>{fee === 0 && subtotalKobo > 0 ? "Free" : naira(fee)}</dd></div>
           <div className="summary-grand"><dt>Total</dt><dd>{naira(total)}</dd></div>
         </dl>
+        {deal?.nudge && <p className="field-note">{deal.nudge}</p>}
+        {promo && !promo.stackWithStudent && studentRef && promoKobo > 0 && studentKobo === 0 && <p className="field-note">The festive deal is bigger than your student discount, so it was used instead.</p>}
         {student.percent > 0 && (studentRef
           ? <button type="button" className="student-remove" onClick={() => setStudentRef(null)}>Remove student discount</button>
           : <p className="field-note"><Link href="/student">Student in Lagos? Save {student.percent}%</Link></p>)}

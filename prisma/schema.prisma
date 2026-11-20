@@ -48,6 +48,7 @@ model Product {
   unit        String      @default("kg") // kg, pack, piece
   packSizeG   Int? // grams per pack, if sold by pack
   stockQty    Int         @default(0)
+  cartonKg    Int? // kg in one carton (10 chicken, 20 fish). Empty = not sold by the carton
   active      Boolean     @default(true)
   isAddOn     Boolean     @default(false) // ponmo, plantain and other extras
   createdAt   DateTime    @default(now())
@@ -63,6 +64,7 @@ model DeliveryZone {
   feeKobo      Int
   freeOverKobo Int? // free delivery above this subtotal, optional
   active       Boolean @default(true)
+  isPickup     Boolean @default(false) // true = collect from the store
   orders       Order[]
 }
 
@@ -113,6 +115,8 @@ model Order {
   @@index([customerId, createdAt])
   @@index([contactPhone])
   discountKobo           Int                  @default(0)
+  promoDiscountKobo      Int                  @default(0)
+  giftName               String?
   studentVerificationId  String?
   studentVerification    StudentVerification? @relation(fields: [studentVerificationId], references: [id])
 }
@@ -203,6 +207,24 @@ model StoreSettings {
   heroCaption            String?
   heroAlt                String?
 }
+// ---- FISH GUY FESTIVE CARTON DEALS ----
+
+model FestivePromo {
+  id               Int      @id @default(1)
+  active           Boolean  @default(false)
+  title            String   @default("Festive Carton Deals")
+  startDate        String   @default("2026-12-15") // Lagos date, YYYY-MM-DD
+  endDate          String   @default("2027-01-09") // last day included
+  giftMinCartons   Int      @default(2)
+  giftName         String?
+  giftQty          Int      @default(0)
+  bigMinCartons    Int      @default(5)
+  rewardType       String   @default("NONE") // NONE | PERCENT | PER_CARTON | FREE_DELIVERY
+  rewardValue      Int      @default(0) // percent, or kobo off per carton
+  stackWithStudent Boolean  @default(false)
+  updatedAt        DateTime @updatedAt
+}
+
 // ---- FISH GUY SOUNDS: paste this block at the END of prisma/schema.prisma ----
 
 enum MusicOrderStatus {

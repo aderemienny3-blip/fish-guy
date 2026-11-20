@@ -63,6 +63,8 @@ export default async function OrderPage({ params }: { params: Promise<{ referenc
         </ul>
         <dl className="summary-totals">
           {order.discountKobo > 0 && <div className="summary-discount"><dt>Student discount</dt><dd>-{naira(order.discountKobo)}</dd></div>}
+          {order.promoDiscountKobo > 0 && <div className="summary-discount"><dt>Festive deal</dt><dd>-{naira(order.promoDiscountKobo)}</dd></div>}
+          {order.giftName && <div className="summary-gift"><dt>Free gift</dt><dd>{order.giftName}</dd></div>}
           <div><dt>Delivery ({order.zone.name})</dt><dd>{naira(order.deliveryFeeKobo)}</dd></div>
           <div className="summary-grand"><dt>Total</dt><dd>{naira(order.totalKobo)}</dd></div>
         </dl>

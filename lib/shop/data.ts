@@ -15,6 +15,7 @@ export type ShopProduct = {
   stockQty: number;
   mostOrdered: boolean;
   sponsor: AdView | null;
+  cartonKg: number | null;
   isAddOn: boolean;
 };
 
@@ -32,6 +33,7 @@ const toView = (p: Row, top: Set<string>, stickers: AdView[] = []): ShopProduct 
   unit: p.unit,
   stockQty: p.stockQty,
   isAddOn: p.isAddOn,
+  cartonKg: p.cartonKg,
   mostOrdered: top.has(p.id),
   sponsor: top.has(p.id) && stickers.length ? stickers[[...top].indexOf(p.id) % stickers.length] : null,
 });

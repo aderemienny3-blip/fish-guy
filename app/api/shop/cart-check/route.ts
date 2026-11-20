@@ -8,7 +8,7 @@ export async function POST(req: Request) {
   if (ids.length === 0) return NextResponse.json({ products: [] });
   const rows = await db.product.findMany({
     where: { id: { in: ids }, active: true },
-    select: { id: true, slug: true, name: true, priceKobo: true, unit: true, stockQty: true, imageUrl: true },
+    select: { id: true, slug: true, name: true, priceKobo: true, unit: true, stockQty: true, imageUrl: true, cartonKg: true },
   });
   return NextResponse.json({ products: rows }, { headers: { "Cache-Control": "no-store" } });
 }

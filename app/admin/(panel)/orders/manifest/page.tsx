@@ -77,6 +77,7 @@ export default async function ManifestPage({
                       {o.items.map((i) => `${i.quantity} × ${i.nameSnapshot}`).join(", ")}
                     </p>
                     {o.notes && <p className="italic">Note: {o.notes}</p>}
+                    {o.giftName && <p className="font-semibold">GIFT: {o.giftName}</p>}
                     <p className="mt-2 flex flex-wrap gap-2 print:hidden">
                       <a href={`tel:+${o.contactPhone}`} className={btnGhost}>Call</a>
                       <a target="_blank" rel="noreferrer" className={btnGhost} href={waLink(o.contactPhone, `Hello ${o.contactName.split(" ")[0]}, your Fish Guy order ${o.reference} is on its way to you now. Please keep your phone close so our rider can reach you.`)}>WhatsApp: on the way</a>

@@ -50,6 +50,12 @@ export default function ProductFields({ product }: { product?: Product }) {
 
       <ProductPhotoField initial={product?.imageUrl ?? ""} />
 
+      <div>
+        <label className={label} htmlFor="cartonKg">Carton size in kg (optional)</label>
+        <input id="cartonKg" name="cartonKg" type="number" min={1} max={100} defaultValue={product?.cartonKg ?? ""} className={input} placeholder="e.g. 20 for fish, 10 for chicken" />
+        <p className="mt-1 text-xs text-[#9A9585]">Only for products priced per kg. Customers get an “Add 1 carton” button and cartons count towards the festive deal.</p>
+      </div>
+
       <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" name="active" defaultChecked={product ? product.active : true} className="h-4 w-4 accent-[#D4AF37]" />
         Visible in the shop
