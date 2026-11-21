@@ -25,7 +25,7 @@ export default async function AdvertisePage() {
       <ol className="delivery-steps student-steps">
         <li className="delivery-step"><span className="step-number">01</span><h3>Pick and send</h3><p>Choose a package, add your artwork and link.</p></li>
         <li className="delivery-step"><span className="step-number">02</span><h3>We review</h3><p>We check every ad. You get an email either way.</p></li>
-        <li className="delivery-step"><span className="step-number">03</span><h3>Pay and go live</h3><p>Pay securely with Monnify and your ad runs on your dates.</p></li>
+        <li className="delivery-step"><span className="step-number">03</span><h3>Pay and go live</h3><p>Pay securely with Paystack and your ad runs on your dates.</p></li>
       </ol>
       {packages.length === 0 ? (
         <ShopEmptyState title="Ad packages are being set up" description="Booking opens very soon. Please check back shortly." actionHref="/sounds" actionLabel="Listen to Fish Guy Sounds" />

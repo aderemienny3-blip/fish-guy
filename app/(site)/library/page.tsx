@@ -16,7 +16,7 @@ export default async function LibraryPage() {
       <section className="library-intro">
         <p className="eyebrow">YOUR MUSIC, YOURS TO KEEP</p>
         <h1>My Library</h1>
-        <p>Purchased releases show here after Monnify confirms payment. Download links are private, expire after 15 minutes, and can be generated again whenever you need them.</p>
+        <p>Purchased releases show here after Paystack confirms payment. Download links are private, expire after 15 minutes, and can be generated again whenever you need them.</p>
       </section>
       {items.length ? (
         <div className="library-list" aria-label="Purchased tracks">

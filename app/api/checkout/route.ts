@@ -3,7 +3,7 @@ import crypto from "node:crypto";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { auth } from "@/lib/customer-auth";
-import { initTransaction } from "@/lib/monnify";
+import { initPaystack } from "@/lib/paystack";
 import { normalizeNgPhone } from "@/lib/phone";
 import { deliveryFeeFor, isSlotBookable } from "@/lib/delivery";
 import { discountFor, findUsableVerification, getStudentRules } from "@/lib/student";
@@ -159,25 +159,24 @@ export async function POST(req: Request) {
     });
 
     const site = process.env.NEXT_PUBLIC_SITE_URL!;
-    const init = await initTransaction({
+    const init = await initPaystack({
       amountKobo: order.totalKobo,
-      paymentReference: order.reference,
-      customerName: order.contactName,
-      customerEmail: order.contactEmail,
-      description: `Fish Guy order ${order.reference}`,
-      redirectUrl: `${site}/order/${order.reference}`,
+      reference: order.reference,
+      email: order.contactEmail,
+      callbackUrl: `${site}/order/${order.reference}`,
     });
 
     await db.payment.create({
       data: {
         orderId: order.id,
         reference: order.reference,
-        providerRef: init.transactionReference,
+        provider: "paystack",
+        providerRef: init.reference,
         amountKobo: order.totalKobo,
       },
     });
 
-    return NextResponse.json({ checkoutUrl: init.checkoutUrl, reference: order.reference });
+    return NextResponse.json({ checkoutUrl: init.authorizationUrl, reference: order.reference });
   } catch (e) {
     if (e instanceof CheckoutError) return NextResponse.json({ error: e.message }, { status: 409 });
     console.error("checkout failed", e);

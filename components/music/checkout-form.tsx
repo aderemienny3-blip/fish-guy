@@ -24,7 +24,7 @@ export function CheckoutForm({ trackId, title, priceKobo }: { trackId: string; t
     event.preventDefault()
     const formData = new FormData(event.currentTarget)
     setIsPending(true)
-    setMessage('Opening secure Monnify checkout…')
+    setMessage('Opening secure Paystack checkout…')
     idempotencyKey.current ??= crypto.randomUUID()
     try {
       const response = await fetch('/api/music/checkout', {
@@ -48,13 +48,13 @@ export function CheckoutForm({ trackId, title, priceKobo }: { trackId: string; t
   return (
     <section className="checkout-panel" aria-labelledby="buy-track-title">
       <h2 id="buy-track-title">Buy {title}</h2>
-      <p>Pay securely in naira through Monnify. Your purchased track will appear in My Library after payment is verified.</p>
+      <p>Pay securely in naira through Paystack. Your purchased track will appear in My Library after payment is verified.</p>
       <form className="checkout-form" onSubmit={submit}>
         <div className="form-field"><label htmlFor="buyer-name">Your name</label><input id="buyer-name" name="buyerName" autoComplete="name" maxLength={100} required /></div>
         <div className="form-field"><label htmlFor="buyer-email">Email for your receipt</label><input id="buyer-email" name="buyerEmail" type="email" autoComplete="email" maxLength={254} required /></div>
         <button className="button button-gold" type="submit" disabled={isPending}>{isPending ? 'Connecting…' : `Pay ${formatNaira(priceKobo)} securely`}</button>
         <p className={`form-message ${message && !isPending ? 'is-error' : ''}`} aria-live="polite">{message}</p>
-        <p className="checkout-disclaimer">The full audio download is delivered privately after Monnify confirms payment.</p>
+        <p className="checkout-disclaimer">The full audio download is delivered privately after Paystack confirms payment.</p>
       </form>
     </section>
   )

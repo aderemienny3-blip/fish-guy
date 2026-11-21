@@ -10,7 +10,7 @@ export function PaymentReturnStatus({ paymentReference, initiallyPaid }: { payme
 
   async function verifyAgain() {
     setIsPending(true)
-    setMessage('Checking payment with Monnify…')
+    setMessage('Checking payment with Paystack…')
     try {
       const response = await fetch('/api/music/verify', {
         method: 'POST',
@@ -30,9 +30,9 @@ export function PaymentReturnStatus({ paymentReference, initiallyPaid }: { payme
 
   return (
     <section className="payment-status" aria-labelledby="payment-status-title">
-      <p className="eyebrow">MONNIFY PAYMENT</p>
+      <p className="eyebrow">PAYSTACK PAYMENT</p>
       <h1 id="payment-status-title">{paid ? 'You’re all set.' : 'Checking your order.'}</h1>
-      <p>{paid ? 'Payment confirmed. Your purchased music is now available in My Library.' : 'We verify every payment directly with Monnify before adding a track to your library.'}</p>
+      <p>{paid ? 'Payment confirmed. Your purchased music is now available in My Library.' : 'We verify every payment directly with Paystack before adding a track to your library.'}</p>
       <p className="form-message" aria-live="polite">{message}</p>
       <div className="hero-actions">
         {paid ? <Link href="/library" className="button button-gold">Go to My Library</Link> : <button type="button" className="button button-gold" disabled={isPending} onClick={verifyAgain}>{isPending ? 'Checking…' : 'Check payment again'}</button>}

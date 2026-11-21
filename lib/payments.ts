@@ -1,10 +1,10 @@
 import { db } from "@/lib/db";
-import { fetchTransaction } from "@/lib/monnify";
+import { fetchPaystackAsTxn } from "@/lib/paystack";
 import { notifyNeedsRefund, notifyOrderPaid } from "@/lib/notify";
 
 /**
  * Idempotent: safe to call from the webhook AND the order page.
- * Marks the order PAID only after Monnify confirms the amount.
+ * Marks the order PAID only after Paystack confirms the amount.
  */
 export async function settleOrder(reference: string) {
   const payment = await db.payment.findUnique({
@@ -15,7 +15,7 @@ export async function settleOrder(reference: string) {
   if (payment.status === "PAID") return payment.order;
   if (!payment.providerRef) return payment.order;
 
-  const txn = await fetchTransaction(payment.providerRef);
+  const txn = await fetchPaystackAsTxn(payment.reference);
 
   if (txn.paymentStatus !== "PAID") {
     if (txn.paymentStatus === "FAILED") {
@@ -56,7 +56,7 @@ export async function settleOrder(reference: string) {
         if (r.count === 0) ok = false;
       }
       if (!ok) {
-        // Needs a manual refund from the Monnify dashboard.
+        // Needs a manual refund from the Paystack dashboard.
         return { order: await tx.order.update({ where: { id: order.id }, data: { status: "REFUNDED", paidAt: new Date() } }), fresh: true };
       }
     }

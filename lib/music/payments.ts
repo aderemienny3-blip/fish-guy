@@ -1,13 +1,12 @@
 import { db } from "@/lib/db";
-import { fetchTransaction, initTransaction } from "@/lib/monnify";
+import { fetchPaystackAsTxn } from "@/lib/paystack";
 
 export const MUSIC_REF = /^FGS-[A-F0-9]{32}$/;
 
-export { initTransaction as initMusicTransaction };
 
 /**
  * Idempotent: safe from the webhook, the return page and the "check again" button.
- * Marks the order PAID only after Monnify itself confirms status, reference and amount.
+ * Marks the order PAID only after Paystack itself confirms status, reference and amount.
  */
 export async function confirmMusicOrder(reference: string): Promise<boolean> {
   const order = await db.musicOrder.findUnique({ where: { reference } });
@@ -15,7 +14,7 @@ export async function confirmMusicOrder(reference: string): Promise<boolean> {
   if (order.status === "PAID") return true;
   if (!order.providerRef) return false;
 
-  const txn = await fetchTransaction(order.providerRef);
+  const txn = await fetchPaystackAsTxn(order.reference);
   const paidKobo = Math.round(Number(txn.amountPaid) * 100);
   if (txn.paymentStatus !== "PAID" || txn.paymentReference !== order.reference || paidKobo !== order.amountKobo) {
     return false;

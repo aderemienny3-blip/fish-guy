@@ -192,7 +192,7 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
           {busy ? "Starting payment…" : `Pay ${naira(total)} securely`}
         </button>
         {studentRef && <p className="field-note">Student discount applies only if the phone number above is the one you verified with.</p>}
-        <p className="field-note">You will be taken to Monnify to pay by card, bank transfer or USSD.</p>
+        <p className="field-note">You will be taken to Paystack to pay by card, bank transfer or USSD.</p>
       </form>
 
       <aside className="order-summary" aria-label="Order summary">

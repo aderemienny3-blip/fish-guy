@@ -103,7 +103,7 @@ export async function notifyNeedsRefund(o: { reference: string; contactName: str
   await sendEmail(
     adminList(),
     `ACTION NEEDED: refund order ${o.reference}`,
-    shell("Refund needed", `<p>${esc(o.contactName)} (${esc(o.contactPhone)}) paid ${formatNaira(o.totalKobo)} for order <strong>${o.reference}</strong>, but the items ran out before payment arrived. Refund them from the Monnify dashboard and tell them.</p>`),
+    shell("Refund needed", `<p>${esc(o.contactName)} (${esc(o.contactPhone)}) paid ${formatNaira(o.totalKobo)} for order <strong>${o.reference}</strong>, but the items ran out before payment arrived. Refund them from your payment dashboard (Paystack) and tell them.</p>`),
   );
 }
 

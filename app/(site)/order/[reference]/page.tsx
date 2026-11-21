@@ -24,7 +24,7 @@ export default async function OrderPage({ params }: { params: Promise<{ referenc
   const { reference } = await params;
   if (!/^FG-[A-F0-9]{16}$/.test(reference)) notFound();
 
-  // Covers the customer returning from Monnify before the webhook arrives.
+  // Covers the customer returning from Paystack before the webhook arrives.
   try { await settleOrder(reference); } catch { /* show current state; the webhook will catch up */ }
 
   const order = await db.order.findUnique({ where: { reference }, include: { items: true, zone: true, slot: true } });

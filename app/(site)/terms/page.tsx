@@ -13,7 +13,7 @@ export default function Terms() {
         <p>All prices are in Nigerian naira. The price and stock are confirmed by our server when you pay. If an item sells out while you are checking out, we will tell you before you pay. An order is accepted once your payment is confirmed.</p>
       </Section>
       <Section title="Payment">
-        <p>Payments are processed securely by Monnify, by card, bank transfer or USSD. Unpaid orders are released after 30 minutes.</p>
+        <p>Payments are processed securely by Paystack, by card, bank transfer or USSD. Unpaid orders are released after 30 minutes.</p>
       </Section>
       <Section title="Delivery and refunds">
         <p>Delivery areas, times, the cold-chain rules and our refund process are in our <a href="/delivery-refunds">delivery and refunds policy</a>, which forms part of these terms.</p>

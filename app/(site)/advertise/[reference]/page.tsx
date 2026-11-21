@@ -19,7 +19,7 @@ export default async function AdStatusPage({ params }: { params: Promise<{ refer
 
   const first = await db.adCampaign.findUnique({ where: { reference }, select: { paymentRef: true, status: true } });
   if (!first) notFound();
-  // Artist returning from Monnify before the webhook arrives.
+  // Artist returning from Paystack before the webhook arrives.
   if (first.status === "APPROVED" && first.paymentRef) { try { await confirmAdPayment(first.paymentRef); } catch { /* webhook will catch up */ } }
 
   const c = await db.adCampaign.findUniqueOrThrow({ where: { reference } });

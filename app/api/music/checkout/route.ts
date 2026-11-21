@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
-import { initTransaction } from "@/lib/monnify";
+import { initPaystack, isPaystackCheckoutUrl } from "@/lib/paystack";
 import { MUSIC_SESSION_COOKIE, createSessionToken, hashToken, sessionCookie } from "@/lib/music/session";
 
 export const runtime = "nodejs";
@@ -75,21 +75,18 @@ export async function POST(request: Request) {
 
   try {
     const origin = new URL(request.url).origin;
-    const payment = await initTransaction({
+    const payment = await initPaystack({
       amountKobo: order.amountKobo,
-      paymentReference: order.reference,
-      customerName: order.buyerName,
-      customerEmail: order.buyerEmail,
-      description: `FISH GUY SOUNDS - ${track.title}`,
-      redirectUrl: `${origin}/sounds/return?paymentReference=${encodeURIComponent(order.reference)}`,
+      reference: order.reference,
+      email: order.buyerEmail,
+      callbackUrl: `${origin}/sounds/return?paymentReference=${encodeURIComponent(order.reference)}`,
     });
-    const url = new URL(payment.checkoutUrl);
-    if (url.protocol !== "https:" || !url.hostname.endsWith("monnify.com")) throw new Error("bad checkout host");
+    if (!isPaystackCheckoutUrl(payment.authorizationUrl)) throw new Error("bad checkout host");
     await db.musicOrder.update({
       where: { id: order.id },
-      data: { providerRef: payment.transactionReference, checkoutUrl: payment.checkoutUrl },
+      data: { providerRef: payment.reference, checkoutUrl: payment.authorizationUrl },
     });
-    return reply({ checkoutUrl: payment.checkoutUrl }, request, token);
+    return reply({ checkoutUrl: payment.authorizationUrl }, request, token);
   } catch (e) {
     console.error("music checkout failed", e);
     return NextResponse.json({ error: "Secure checkout is temporarily unavailable. Please try again." }, { status: 503 });

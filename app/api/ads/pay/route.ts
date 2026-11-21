@@ -2,7 +2,7 @@ import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { initTransaction } from "@/lib/monnify";
+import { initPaystack } from "@/lib/paystack";
 import { AD_REF } from "@/lib/ads/labels";
 import { confirmAdPayment, effectiveDates, overlapCount } from "@/lib/ads/payments";
 
@@ -30,16 +30,14 @@ export async function POST(req: Request) {
 
   try {
     const paymentRef = "FGA-" + crypto.randomBytes(16).toString("hex").toUpperCase();
-    const init = await initTransaction({
+    const init = await initPaystack({
       amountKobo: c.priceKobo,
-      paymentReference: paymentRef,
-      customerName: c.contactName,
-      customerEmail: c.email,
-      description: `Fish Guy Ads ${c.reference}`,
-      redirectUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/advertise/${c.reference}`,
+      reference: paymentRef,
+      email: c.email,
+      callbackUrl: `${process.env.NEXT_PUBLIC_SITE_URL}/advertise/${c.reference}`,
     });
-    await db.adCampaign.update({ where: { id: c.id }, data: { paymentRef, providerRef: init.transactionReference } });
-    return NextResponse.json({ checkoutUrl: init.checkoutUrl });
+    await db.adCampaign.update({ where: { id: c.id }, data: { paymentRef, providerRef: init.reference } });
+    return NextResponse.json({ checkoutUrl: init.authorizationUrl });
   } catch (e) {
     console.error("ad payment init failed", e);
     return NextResponse.json({ error: "Could not start payment. Please try again." }, { status: 500 });

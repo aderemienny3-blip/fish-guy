@@ -139,9 +139,9 @@ model Payment {
   id          String        @id @default(cuid())
   orderId     String
   order       Order         @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  provider    String        @default("monnify")
+  provider    String        @default("paystack")
   reference   String        @unique // our paymentReference
-  providerRef String? // Monnify transactionReference
+  providerRef String? // Paystack reference
   amountKobo  Int
   status      PaymentStatus @default(INITIATED)
   method      String?

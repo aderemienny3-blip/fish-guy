@@ -50,7 +50,7 @@ export default async function OrderDetail({
       {order.status === "REFUNDED" && (
         <Banner>
           This customer paid after their stock hold expired and the items were no longer available. Refund them from the
-          Monnify dashboard.
+          payment dashboard (Paystack).
         </Banner>
       )}
 
@@ -71,7 +71,7 @@ export default async function OrderDetail({
       </div>
       {cancel && order.status !== "PENDING_PAYMENT" && (
         <p className="-mt-3 mb-6 text-xs text-[#9A9585] print:hidden">
-          Cancelling returns the items to stock. If the customer already paid, refund them from the Monnify dashboard.
+          Cancelling returns the items to stock. If the customer already paid, refund them from your payment dashboard (Paystack).
         </p>
       )}
 
@@ -152,7 +152,7 @@ export default async function OrderDetail({
                 {order.payments.map((p) => (
                   <li key={p.id}>
                     <p>{p.status} · {formatNaira(p.amountKobo)}{p.method ? ` · ${p.method}` : ""}</p>
-                    {p.providerRef && <p className="break-all text-xs text-[#9A9585]">Monnify ref: {p.providerRef}</p>}
+                    {p.providerRef && <p className="break-all text-xs text-[#9A9585]">Paystack ref: {p.providerRef}</p>}
                   </li>
                 ))}
               </ul>

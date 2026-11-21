@@ -1,6 +1,6 @@
 import { db } from "@/lib/db";
 import { addDays, lagosNow } from "@/lib/delivery";
-import { fetchTransaction } from "@/lib/monnify";
+import { fetchPaystackAsTxn } from "@/lib/paystack";
 import { mailPaid } from "@/lib/ads/mail";
 
 /** Dates actually used if payment happens after the requested start has passed. */
@@ -18,16 +18,16 @@ export function overlapCount(packageId: string, startDate: string, endDate: stri
 }
 
 /**
- * Idempotent: safe from the webhook and from the status page after the artist returns from Monnify.
- * Marks PAID only after Monnify confirms the status, reference and exact amount.
+ * Idempotent: safe from the webhook and from the status page after the artist returns from Paystack.
+ * Marks PAID only after Paystack confirms the status, reference and exact amount.
  */
 export async function confirmAdPayment(paymentRef: string): Promise<boolean> {
   const c = await db.adCampaign.findUnique({ where: { paymentRef } });
   if (!c) return false;
   if (c.status === "PAID") return true;
-  if (c.status !== "APPROVED" || !c.providerRef) return false;
+  if (c.status !== "APPROVED" || !c.paymentRef) return false;
 
-  const txn = await fetchTransaction(c.providerRef);
+  const txn = await fetchPaystackAsTxn(c.paymentRef);
   const paidKobo = Math.round(Number(txn.amountPaid) * 100);
   if (txn.paymentStatus !== "PAID" || txn.paymentReference !== c.paymentRef || paidKobo !== c.priceKobo) return false;
 

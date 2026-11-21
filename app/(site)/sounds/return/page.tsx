@@ -23,7 +23,7 @@ export default async function PaymentReturnPage({ searchParams }: ReturnPageProp
     <main className="page-width payment-page">
       <nav className="breadcrumb" aria-label="Breadcrumb"><Link href="/sounds">Sounds</Link><span aria-hidden="true">/</span><span>Payment status</span></nav>
       {paymentReference && sessionHash ? <PaymentReturnStatus paymentReference={paymentReference} initiallyPaid={paid} /> : (
-        <section className="payment-status"><p className="eyebrow">MONNIFY PAYMENT</p><h1>Order not found.</h1><p>This payment could not be matched to this browser session. Visit My Library or contact Fish Guy support if you have been charged.</p><Link href="/library" className="button button-gold">Open My Library</Link></section>
+        <section className="payment-status"><p className="eyebrow">PAYSTACK PAYMENT</p><h1>Order not found.</h1><p>This payment could not be matched to this browser session. Visit My Library or contact Fish Guy support if you have been charged.</p><Link href="/library" className="button button-gold">Open My Library</Link></section>
       )}
     </main>
   )

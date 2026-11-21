@@ -29,7 +29,7 @@ export default async function MusicAdmin({
     <>
       <PageHeader
         title="Fish Guy Sounds"
-        subtitle="Artists, tracks and music sales. Music payments go through the same Monnify account."
+        subtitle="Artists, tracks and music sales. Music payments go through the same Paystack account."
         actions={
           <>
             <Link href="/admin/music/applications" className={btnGhost}>

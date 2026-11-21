@@ -24,7 +24,7 @@ const iconFor = (label: string): LucideIcon => {
 const deliverySteps = [
   { title: "Choose your area", detail: "We deliver across Lagos, except Ikorodu.", icon: MapPin },
   { title: "Choose a time slot", detail: "Pick a day and slot between 8:30 AM and 9:00 PM.", icon: Clock3 },
-  { title: "Pay with Monnify", detail: "Pay securely in naira by card, transfer or USSD.", icon: CookingPot },
+  { title: "Pay in naira", detail: "Pay securely in naira by card, transfer or USSD.", icon: CookingPot },
 ];
 
 export function StorefrontHome({
