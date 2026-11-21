@@ -1,12 +1,15 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { getActivePromo } from "@/lib/festive";
+import { getAdmin } from "@/lib/admin/auth";
+import { getActivePromo, getPreviewPromo } from "@/lib/festive";
 
 export const dynamic = "force-dynamic";
 
 // Public: the festive offer that is live right now (or null), used by the pop-up, ribbon and cart.
-export async function GET() {
-  const promo = await getActivePromo();
+// With ?preview=1 and a signed-in admin, returns the saved offer even if it is off or not started yet.
+export async function GET(req: Request) {
+  const wantsPreview = new URL(req.url).searchParams.get("preview") === "1";
+  const promo = wantsPreview && (await getAdmin()) ? await getPreviewPromo() : await getActivePromo();
   let cartonProducts: { id: string; cartonKg: number }[] = [];
   if (promo) {
     try {

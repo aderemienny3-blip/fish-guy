@@ -31,6 +31,17 @@ export function toRules(row: Row, claimed: number): PromoRules {
     rewardType: (["PERCENT", "PER_CARTON", "FREE_DELIVERY"].includes(row.rewardType) ? row.rewardType : "NONE") as RewardType,
     rewardValue: row.rewardValue,
     stackWithStudent: row.stackWithStudent,
+    popupEnabled: row.popupEnabled,
+    ribbonEnabled: row.ribbonEnabled,
+    ribbonText: row.ribbonText,
+    popupImage: row.popupImage,
+    popupHeadline: row.popupHeadline,
+    popupMessage: row.popupMessage,
+    popupButton: row.popupButton,
+    popupLink: row.popupLink,
+    popupDelay: row.popupDelay,
+    popupFrequency: row.popupFrequency === "DAY" ? "DAY" : "VISIT",
+    popupShowOffers: row.popupShowOffers,
   };
 }
 
@@ -39,6 +50,16 @@ export async function loadLivePromo(client: Client): Promise<PromoRules | null> 
   const row = await client.festivePromo.findUnique({ where: { id: 1 } });
   if (!row || !isLive(row)) return null;
   return toRules(row, await giftsClaimed(client));
+}
+
+/** For the admin preview: the saved offer even when it is off or not started. Never throws. */
+export async function getPreviewPromo(): Promise<PromoRules | null> {
+  try {
+    const row = await db.festivePromo.findUnique({ where: { id: 1 } });
+    return row ? toRules(row, await giftsClaimed(db)) : null;
+  } catch {
+    return null;
+  }
 }
 
 /** For pages: the offer that is live right now, or null. Never throws. */

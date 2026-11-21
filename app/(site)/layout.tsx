@@ -10,6 +10,7 @@ import { PwaBoot } from "@/components/shop/pwa";
 import "./site.css";
 import "./payments.css";
 import "./festive.css";
+import "./festive-edit.css";
 import "./artist-page.css";
 import "./addons.css";
 import "./music-play.css";

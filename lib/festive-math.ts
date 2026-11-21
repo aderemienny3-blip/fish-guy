@@ -15,6 +15,18 @@ export type PromoRules = {
   rewardType: RewardType;
   rewardValue: number; // percent, or kobo off per carton
   stackWithStudent: boolean;
+  // Pop-up and strip, edited in Admin > Festive deals
+  popupEnabled?: boolean;
+  ribbonEnabled?: boolean;
+  ribbonText?: string | null;
+  popupImage?: string | null;
+  popupHeadline?: string | null;
+  popupMessage?: string | null;
+  popupButton?: string | null;
+  popupLink?: string | null;
+  popupDelay?: number;
+  popupFrequency?: "VISIT" | "DAY";
+  popupShowOffers?: boolean;
 };
 
 export const MAX_QTY = 200;

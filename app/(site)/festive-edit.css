@@ -1,0 +1,5 @@
+.site-root .festive-popup { overflow: hidden; }
+.site-root .festive-popup-image { position: relative; margin: -32px -28px 6px; aspect-ratio: 40 / 21; background: #1a1913; }
+.site-root .festive-popup-image img { object-fit: cover; }
+.site-root .festive-popup-image + .festive-eyebrow { margin-top: 10px; }
+.site-root .festive-popup .festive-close { z-index: 2; background: rgba(0,0,0,.55); color: #f5f1e6; border-radius: 50%; width: 36px; height: 36px; top: 10px; right: 10px; }

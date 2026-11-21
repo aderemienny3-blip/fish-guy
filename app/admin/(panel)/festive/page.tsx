@@ -5,6 +5,7 @@ import { formatNaira } from "@/lib/money";
 import { lagosNow } from "@/lib/delivery";
 import { giftsClaimed, isLive } from "@/lib/festive";
 import { Banner, PageHeader, Stat, btn, btnGhost, card, input, label } from "@/components/admin/ui";
+import ProductPhotoField from "@/components/admin/ProductPhotoField";
 import { saveFestive } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -23,11 +24,11 @@ export default async function FestiveAdmin({ searchParams }: { searchParams: Pro
   ]);
   const today = lagosNow().date;
   const status = !row ? "Not set up" : !row.active ? "Off" : isLive(row, today) ? "Live now" : today < row.startDate ? "Scheduled" : "Ended";
-  const v = row ?? { active: false, title: "Festive Carton Deals", startDate: "2026-12-15", endDate: "2027-01-09", giftMinCartons: 2, giftName: "", giftQty: 0, bigMinCartons: 5, rewardType: "NONE", rewardValue: 0, stackWithStudent: false };
+  const v = row ?? { active: false, title: "Festive Carton Deals", startDate: "2026-12-15", endDate: "2027-01-09", giftMinCartons: 2, giftName: "", giftQty: 0, bigMinCartons: 5, rewardType: "NONE", rewardValue: 0, stackWithStudent: false, popupEnabled: true, ribbonEnabled: true, ribbonText: "", popupImage: "", popupHeadline: "", popupMessage: "", popupButton: "", popupLink: "/festive", popupDelay: 2, popupFrequency: "VISIT", popupShowOffers: true };
 
   return (
     <>
-      <PageHeader title="Festive carton deals" subtitle="A gift at a few cartons, a bigger reward at more. Shown as a pop-up, a top strip, a /festive page and a nudge in the cart." actions={<Link href="/festive" className={btnGhost}>View page</Link>} />
+      <PageHeader title="Festive carton deals" subtitle="A gift at a few cartons, a bigger reward at more. Shown as a pop-up, a top strip, a /festive page and a nudge in the cart." actions={<><Link href="/?festivePreview=1" target="_blank" className={btnGhost}>Preview pop-up</Link> <Link href="/festive" className={btnGhost}>View page</Link></>} />
       {saved && <Banner kind="ok">Saved.</Banner>}
       {error && <Banner>{error}</Banner>}
 
@@ -84,6 +85,33 @@ export default async function FestiveAdmin({ searchParams }: { searchParams: Pro
             <div><label className={label} htmlFor="perCarton">If naira per carton: ₦ off each carton</label><input id="perCarton" name="perCarton" inputMode="decimal" defaultValue={v.rewardType === "PER_CARTON" ? v.rewardValue / 100 : ""} className={input} /></div>
           </div>
           <p className="text-xs text-[#9A9585]">Work out your margin first. Percent and naira-per-carton apply only to products sold by the carton. Free delivery is the cheapest to give if prices are tight.</p>
+        </fieldset>
+
+        <fieldset className="space-y-4 rounded-lg border border-white/10 p-4">
+          <legend className="px-1 text-sm font-medium text-[#D4AF37]">Pop-up and top strip (what customers see)</legend>
+          <p className="text-xs text-[#9A9585]">Press Save, then &ldquo;Preview pop-up&rdquo; at the top to see it on the real site, even before the deal starts. Preview only works while you are signed in.</p>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="popupEnabled" defaultChecked={v.popupEnabled} className="h-4 w-4 accent-[#D4AF37]" /> Show the pop-up</label>
+          <ProductPhotoField initial={v.popupImage ?? ""} title="Pop-up picture (landscape works best, about 1200 by 630)" name="popupImage" />
+          <div><label className={label} htmlFor="popupHeadline">Headline (empty = the title above)</label><input id="popupHeadline" name="popupHeadline" defaultValue={v.popupHeadline ?? ""} maxLength={60} className={input} placeholder="Christmas carton deals are here" /></div>
+          <div><label className={label} htmlFor="popupMessage">Message under the offers (optional)</label><textarea id="popupMessage" name="popupMessage" defaultValue={v.popupMessage ?? ""} maxLength={160} rows={2} className={input} placeholder="Chicken, fish and more, by the carton." /></div>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="popupShowOffers" defaultChecked={v.popupShowOffers} className="h-4 w-4 accent-[#D4AF37]" /> Show the gift and reward lines (they are written for you from the settings above, so they are always correct)</label>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div><label className={label} htmlFor="popupButton">Button text</label><input id="popupButton" name="popupButton" defaultValue={v.popupButton ?? ""} maxLength={24} className={input} placeholder="See the deals" /></div>
+            <div><label className={label} htmlFor="popupLink">Button goes to</label>
+              <select id="popupLink" name="popupLink" defaultValue={v.popupLink} className={input}>
+                <option value="/festive">The festive deal page</option>
+                <option value="/shop">The shop</option>
+                <option value="/">The home page</option>
+              </select></div>
+            <div><label className={label} htmlFor="popupDelay">Shows after (seconds)</label><input id="popupDelay" name="popupDelay" type="number" min={0} max={30} defaultValue={v.popupDelay} className={input} /></div>
+            <div><label className={label} htmlFor="popupFrequency">How often</label>
+              <select id="popupFrequency" name="popupFrequency" defaultValue={v.popupFrequency} className={input}>
+                <option value="VISIT">Once per visit</option>
+                <option value="DAY">Once a day</option>
+              </select></div>
+          </div>
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="ribbonEnabled" defaultChecked={v.ribbonEnabled} className="h-4 w-4 accent-[#D4AF37]" /> Show the gold strip at the top of every page</label>
+          <div><label className={label} htmlFor="ribbonText">Strip text (empty = written for you from the offers)</label><input id="ribbonText" name="ribbonText" defaultValue={v.ribbonText ?? ""} maxLength={90} className={input} placeholder="Christmas carton deals" /></div>
         </fieldset>
 
         <label className="flex items-center gap-2 text-sm">

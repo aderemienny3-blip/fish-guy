@@ -222,6 +222,17 @@ model FestivePromo {
   rewardType       String   @default("NONE") // NONE | PERCENT | PER_CARTON | FREE_DELIVERY
   rewardValue      Int      @default(0) // percent, or kobo off per carton
   stackWithStudent Boolean  @default(false)
+  popupEnabled     Boolean  @default(true)
+  ribbonEnabled    Boolean  @default(true)
+  ribbonText       String?
+  popupImage       String?
+  popupHeadline    String?
+  popupMessage     String?
+  popupButton      String?
+  popupLink        String   @default("/festive")
+  popupDelay       Int      @default(2)
+  popupFrequency   String   @default("VISIT") // VISIT | DAY
+  popupShowOffers  Boolean  @default(true)
   updatedAt        DateTime @updatedAt
 }
 
