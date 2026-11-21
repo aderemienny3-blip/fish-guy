@@ -14,6 +14,7 @@ export function SiteHeader() {
         <Link href="/" className="nav-link">Shop</Link>
         <Link href="/shop?category=fish" className="nav-link">Frozen Fish</Link>
         <Link href="/orders" className="nav-link">Orders</Link>
+        <Link href="/account" className="nav-link">Account</Link>
         <Link href="/sounds" className="nav-link">Sounds</Link>
       </nav>
       <div className="header-utilities">
@@ -34,6 +35,7 @@ export function SiteFooter() {
         <Link href="/shop">Shop</Link>
         <Link href="/sounds">Sounds</Link>
         <Link href="/library">My library</Link>
+        <Link href="/account">My account</Link>
         <Link href="/student">Student discount</Link>
         <Link href="/advertise">Advertise your music</Link>
         <Link href="/sounds/apply">Artist application</Link>

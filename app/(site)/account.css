@@ -1,0 +1,14 @@
+.site-root .account-page { max-width: 760px; }
+.site-root .account-card { display: grid; gap: 12px; margin: 18px 0; padding: 18px; border: 1px solid #29271f; background: #0f0f0d; }
+.site-root .account-card label { display: grid; gap: 6px; font-size: 13px; color: #cfc9b6; }
+.site-root .account-name { grid-template-columns: 1fr auto; align-items: end; }
+.site-root .account-note { color: #9a9585; font-size: 13px; }
+.site-root .account-h2 { margin: 36px 0 12px; font-family: Georgia, 'Times New Roman', serif; font-size: 24px; font-weight: 400; }
+.site-root .account-orders { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 12px; }
+.site-root .account-order { padding: 16px; border: 1px solid #29271f; background: #0f0f0d; display: grid; gap: 6px; }
+.site-root .account-order-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 6px; font-size: 13px; }
+.site-root .account-order-head span { color: #9a9585; }
+.site-root .account-order-items { margin: 0; color: #d6d1c2; font-size: 14px; }
+.site-root .account-order-total { margin: 0; color: #d4af37; font-weight: 700; }
+.site-root .account-order-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 6px; }
+@media (max-width: 560px) { .site-root .account-name { grid-template-columns: 1fr; } }

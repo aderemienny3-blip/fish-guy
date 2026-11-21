@@ -6,11 +6,11 @@ export const BUSINESS = {
   name: "Fish Guy",
   legalName: "", // registered name, e.g. "Fish Guy Foods Ltd". Leave empty if unregistered.
   cacNumber: "", // e.g. "RC 1234567"
-  address: "", //address: "14 Koloba Road, off Bada Palace, Ayobo, Ipaja, Lagos", // business address
-  phone: "", // e.g. "0801 234 5678"
-  whatsapp: "", // digits only with country code, e.g. "2348012345678"
-  email: "", // customer support email
-  instagram: "", // handle only, e.g. "fishguy.ng"
+  address: "14 Koloba Road, off Bada Palace, Ayobo, Ipaja, Lagos",
+  phone: "08115993788",
+  whatsapp: "2349026405667",
+  email: "Hellothefishguy@gmail.com",
+  instagram: "fishguyfrozenstore",
   // Your policy: how long after delivery a customer can report a problem (hours).
   reportWindowHours: 24,
   lastUpdated: "17 November 2026",

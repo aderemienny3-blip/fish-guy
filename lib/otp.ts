@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { db } from "@/lib/db";
 import { normalizeNgPhone } from "@/lib/phone";
+import { sendWhatsAppOtp, whatsappConfigured } from "@/lib/whatsapp";
 
 const CODE_TTL_MS = 5 * 60 * 1000;
 const MAX_SENDS_PER_WINDOW = 3;
@@ -45,7 +46,14 @@ export async function requestOtp(rawPhone: string): Promise<{ ok: true } | { ok:
   await db.otpCode.create({
     data: { phone, codeHash: hash(phone, code), expiresAt: new Date(Date.now() + CODE_TTL_MS) },
   });
-  await sendSms(phone, `Your Fish Guy code is ${code}. It expires in 5 minutes.`);
+  // WhatsApp first (cheap and reliable in Nigeria), then SMS if you have set that up.
+  if (whatsappConfigured() && (await sendWhatsAppOtp(phone, code))) return { ok: true };
+  if (!process.env.TERMII_API_KEY) return { ok: false, error: "Login codes are not available right now. Please try again later." };
+  try {
+    await sendSms(phone, `Your Fish Guy code is ${code}. It expires in 5 minutes.`);
+  } catch {
+    return { ok: false, error: "We could not send your code. Please try again." };
+  }
   return { ok: true };
 }
 

@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { fetchPaystackAsTxn } from "@/lib/paystack";
 import { notifyNeedsRefund, notifyOrderPaid } from "@/lib/notify";
+import { alertOwner, orderAlertText, refundAlertText } from "@/lib/whatsapp";
 
 /**
  * Idempotent: safe to call from the webhook AND the order page.
@@ -67,10 +68,14 @@ export async function settleOrder(reference: string) {
   if (settled.fresh) {
     try {
       if (settled.order.status === "REFUNDED") {
+        await alertOwner(refundAlertText(settled.order));
         await notifyNeedsRefund(settled.order);
       } else {
         const full = await db.order.findUnique({ where: { id: settled.order.id }, include: { items: true, zone: true, slot: true } });
-        if (full) await notifyOrderPaid(full);
+        if (full) {
+          await alertOwner(orderAlertText(full));
+          await notifyOrderPaid(full);
+        }
       }
     } catch (e) {
       console.error("order notification failed", e);
