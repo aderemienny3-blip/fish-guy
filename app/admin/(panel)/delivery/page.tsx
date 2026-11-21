@@ -5,6 +5,38 @@ import { fmt12, koboToInput, minutesToHHMM } from "@/lib/admin/format";
 import { Banner, PageHeader, btn, btnGhost, card, input, label } from "@/components/admin/ui";
 import { saveSlot, saveZone } from "./actions";
 
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+type Z = { id: string; name: string; feeKobo: number; freeOverKobo: number | null; minOrderKobo: number | null; deliveryDays: string | null; note: string | null; active: boolean; isPickup: boolean };
+
+function ZoneForm({ z }: { z: Z | null }) {
+  const picked = new Set((z?.deliveryDays ?? "").split(",").filter(Boolean).map(Number));
+  return (
+    <form action={saveZone} className="space-y-3 rounded-lg border border-white/10 p-4">
+      {z && <input type="hidden" name="id" value={z.id} />}
+      <div className="grid items-end gap-3 sm:grid-cols-[1fr_8rem_9rem_9rem]">
+        <div><label className={label}>Area</label><input name="name" defaultValue={z?.name ?? ""} placeholder="e.g. Ota (Covenant & Bells)" className={input} /></div>
+        <div><label className={label}>Fee (₦)</label><input name="fee" defaultValue={z ? koboToInput(z.feeKobo) : ""} className={input} /></div>
+        <div><label className={label}>Free over (₦)</label><input name="freeOver" defaultValue={z && z.freeOverKobo !== null ? koboToInput(z.freeOverKobo) : ""} placeholder="optional" className={input} /></div>
+        <div><label className={label}>Minimum order (₦)</label><input name="minOrder" defaultValue={z && z.minOrderKobo !== null ? koboToInput(z.minOrderKobo) : ""} placeholder="optional" className={input} /></div>
+      </div>
+      <div><label className={label}>Note shown to customers (optional)</label><input name="note" defaultValue={z?.note ?? ""} placeholder="e.g. Campus delivery, bulk orders only" className={input} maxLength={160} /></div>
+      <div>
+        <label className={label}>Delivery days (tick none for every day)</label>
+        <div className="flex flex-wrap gap-4 pt-1 text-sm">
+          {DAY_NAMES.map((n, i) => (
+            <label key={n} className="flex items-center gap-1.5"><input type="checkbox" name="days" value={i} defaultChecked={picked.has(i)} className="h-4 w-4 accent-[#D4AF37]" /> {n}</label>
+          ))}
+        </div>
+      </div>
+      <div className="flex items-center justify-between">
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="active" defaultChecked={z ? z.active : true} className="h-4 w-4 accent-[#D4AF37]" /> On</label>
+        <button type="submit" className={z ? btnGhost : btn}>{z ? "Save" : "Add area"}</button>
+      </div>
+    </form>
+  );
+}
+
 export default async function DeliveryPage({
   searchParams,
 }: {
@@ -33,31 +65,15 @@ export default async function DeliveryPage({
           Customers pick an area at checkout. Leave &quot;Free over&quot; empty if you never waive the fee. Areas can be
           switched off but not deleted, so old orders keep their history.
         </p>
-        <div className="space-y-3">
+        <div className="space-y-4">
           {zones.length === 0 && <p className="text-sm text-[#9A9585]">No areas yet. Add your first one below.</p>}
-          {zones.map((z) => (
-            <form key={z.id} action={saveZone} className="grid items-end gap-3 sm:grid-cols-[1fr_8rem_9rem_auto_auto]">
-              <input type="hidden" name="id" value={z.id} />
-              <div><label className={label}>Area</label><input name="name" defaultValue={z.name} className={input} /></div>
-              <div><label className={label}>Fee (₦)</label><input name="fee" defaultValue={koboToInput(z.feeKobo)} className={input} /></div>
-              <div><label className={label}>Free over (₦)</label><input name="freeOver" defaultValue={z.freeOverKobo !== null ? koboToInput(z.freeOverKobo) : ""} className={input} /></div>
-              <label className="flex items-center gap-2 pb-2 text-sm">
-                <input type="checkbox" name="active" defaultChecked={z.active} className="h-4 w-4 accent-[#D4AF37]" /> On
-              </label>
-              <button type="submit" className={btnGhost}>Save</button>
-            </form>
-          ))}
+          {zones.map((z) => <ZoneForm key={z.id} z={z} />)}
         </div>
 
-        <form action={saveZone} className="mt-6 grid items-end gap-3 border-t border-white/10 pt-5 sm:grid-cols-[1fr_8rem_9rem_auto_auto]">
-          <div><label className={label}>New area</label><input name="name" placeholder="e.g. Lekki Phase 1" className={input} /></div>
-          <div><label className={label}>Fee (₦)</label><input name="fee" className={input} /></div>
-          <div><label className={label}>Free over (₦)</label><input name="freeOver" placeholder="optional" className={input} /></div>
-          <label className="flex items-center gap-2 pb-2 text-sm">
-            <input type="checkbox" name="active" defaultChecked className="h-4 w-4 accent-[#D4AF37]" /> On
-          </label>
-          <button type="submit" className={btn}>Add area</button>
-        </form>
+        <div className="mt-6 border-t border-white/10 pt-5">
+          <p className="mb-3 text-sm text-[#9A9585]">Add a new area</p>
+          <ZoneForm z={null} />
+        </div>
       </section>
 
       <section className={`${card} p-5`}>

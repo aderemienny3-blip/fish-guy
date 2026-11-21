@@ -88,7 +88,7 @@ export default async function FestivePage() {
         <h2>How it works</h2>
         <ol className="festive-steps">
           <li>Add cartons to your cart. Your cart shows how close you are to each reward.</li>
-          <li>{pickup ? "Choose delivery across Lagos (except Ikorodu) or collect from our store." : "Choose your delivery day and time at checkout."}</li>
+          <li>{pickup ? "Choose delivery across Lagos (except Ikorodu) or selected Ogun campus areas, or collect from our store." : "Choose your delivery day and time at checkout."}</li>
           <li>The gift and discount are added automatically when you pay.</li>
         </ol>
       </section>

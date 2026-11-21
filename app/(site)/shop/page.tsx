@@ -15,7 +15,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
     <main className="page-width shop-listing-page">
       <p className="eyebrow">FISH GUY · FROZEN FOOD, LAGOS</p>
       <div className="shop-listing-heading">
-        <div><h1>{selected?.label ?? "Shop frozen food"}</h1><p>Prices are per kg. Delivery across Lagos, except Ikorodu.</p></div>
+        <div><h1>{selected?.label ?? "Shop frozen food"}</h1><p>Prices are per kg. Delivery across Lagos (except Ikorodu) and selected Ogun campuses.</p></div>
         <Link href="/" className="text-link">Back to home</Link>
       </div>
       {(categories.length > 0 || addOns.length > 0) && (

@@ -8,7 +8,7 @@ export default function DeliveryRefunds() {
   return (
     <LegalPage eyebrow="DELIVERY & REFUNDS" title="Delivery, cold chain and refunds" intro="How we deliver frozen food safely, and what we do if something is not right.">
       <Section title="Where and when we deliver">
-        <p>We deliver across Lagos, except Ikorodu and its local council development areas. You choose a delivery day and a time slot at checkout. Slots are available every day between 8:30 AM and 9:00 PM, and need at least 2 hours to pack your order.</p>
+        <p>We deliver across Lagos, except Ikorodu and its local council development areas, and to selected Ogun campus areas on set days (shown at checkout). You choose a delivery day and a time slot at checkout. Slots are available every day between 8:30 AM and 9:00 PM, and need at least 2 hours to pack your order.</p>
         <p>Delivery fees depend on your area and are shown before you pay. Some areas get free delivery above a set order value, shown at checkout when it applies.</p>
       </Section>
       <Section title="Keeping your food frozen">

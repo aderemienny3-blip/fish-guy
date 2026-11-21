@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
-import { addDays, deliveryFeeFor, isSlotBookable } from "@/lib/delivery";
+import { addDays, deliveryFeeFor, isSlotBookable, zoneAllowsDate, describeZoneDays } from "@/lib/delivery";
 import { naira } from "@/lib/shop/format";
 import { useCart } from "@/components/shop/cart";
 import { discountFor } from "@/lib/student-math";
@@ -10,7 +10,7 @@ import { MAX_QTY, cartonsOf, evaluatePromo, resolveDiscounts, type PromoRules } 
 
 const STUDENT_KEY = "fish-guy-student-v1";
 
-type Zone = { id: string; name: string; feeKobo: number; freeOverKobo: number | null };
+type Zone = { id: string; name: string; feeKobo: number; freeOverKobo: number | null; minOrderKobo: number | null; deliveryDays: string | null; note: string | null };
 type Slot = { id: string; label: string; startMinute: number };
 type Live = { id: string; slug: string; name: string; priceKobo: number; unit: string; stockQty: number; imageUrl: string | null; cartonKg?: number | null };
 type Pickup = { id: string; address: string };
@@ -67,19 +67,20 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
     return { items, unavailable, subtotalKobo: items.reduce((n, i) => n + i.priceKobo * i.quantity, 0) };
   }, [lines, live]);
 
+  const zone = zones.find((z) => z.id === zoneId) ?? zones[0];
   const days = useMemo(() => {
     const out: string[] = [];
     for (let d = today; d <= lastDay; d = addDays(d, 1)) {
+      if (!isPickup && zone && !zoneAllowsDate(zone, d)) continue;
       if (slots.some((s) => isSlotBookable(d, s.startMinute))) out.push(d);
     }
     return out;
-  }, [today, lastDay, slots]);
+  }, [today, lastDay, slots, zone, isPickup]);
 
   const effectiveDate = date && days.includes(date) ? date : days[0] ?? "";
   const openSlots = slots.filter((s) => effectiveDate && isSlotBookable(effectiveDate, s.startMinute));
   const effectiveSlot = openSlots.some((s) => s.id === slotId) ? slotId : openSlots[0]?.id ?? "";
 
-  const zone = zones.find((z) => z.id === zoneId) ?? zones[0];
   const cartonLines = items.map((i) => ({ qty: i.quantity, cartonKg: i.cartonKg }));
   const deal = promo ? evaluatePromo(promo, cartonsOf(cartonLines), items.reduce((n, i) => n + (i.cartonKg ? i.priceKobo * i.quantity : 0), 0)) : null;
   const { promoKobo, studentKobo } = resolveDiscounts({
@@ -91,6 +92,8 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
   const discount = studentKobo;
   const fee = isPickup || deal?.freeDelivery ? 0 : zone ? deliveryFeeFor(zone, subtotalKobo) : 0;
   const total = subtotalKobo - discount - promoKobo + fee;
+  const minOrder = !isPickup && zone?.minOrderKobo ? zone.minOrderKobo : 0;
+  const belowMin = minOrder > 0 && subtotalKobo < minOrder;
 
   if (!ready) return <p className="utility-intro" role="status">Loading your cart…</p>;
 
@@ -169,6 +172,11 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
                   {zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}
                 </select>
               </label>
+              {zone && (zone.note || zone.deliveryDays || zone.minOrderKobo) && (
+                <p className="field-note span-2">
+                  {[zone.note, zone.deliveryDays ? `We deliver here on ${describeZoneDays(zone.deliveryDays)} only.` : "", zone.minOrderKobo ? `Minimum order ${naira(zone.minOrderKobo)}.` : ""].filter(Boolean).join(" ")}
+                </p>
+              )}
             </>
           )}
           <label>
@@ -184,11 +192,12 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
             </select>
           </label>
           <label className="span-2">{isPickup ? "Note for the store (optional)" : "Note for the rider (optional)"}<input name="notes" maxLength={300} /></label>
-          <p className="field-note span-2">{isPickup ? "Slots need at least 2 hours to pack your order." : "We deliver across Lagos, except Ikorodu. Slots need at least 2 hours to pack your order."}</p>
+          <p className="field-note span-2">{isPickup ? "Slots need at least 2 hours to pack your order." : "We deliver across Lagos (except Ikorodu) and selected Ogun campus areas. Slots need at least 2 hours to pack your order."}</p>
         </fieldset>
         {days.length === 0 && <p className="form-message is-error" role="alert">No {isPickup ? "pickup" : "delivery"} slots are open right now. Please check back soon.</p>}
         {error && <p className="form-message is-error" role="alert">{error}</p>}
-        <button className="button button-gold" type="submit" disabled={busy || items.length === 0 || days.length === 0}>
+        {belowMin && <p className="form-message is-error" role="alert">Delivery to {zone?.name} needs a minimum order of {naira(minOrder)}. Add {naira(minOrder - subtotalKobo)} more to continue.</p>}
+        <button className="button button-gold" type="submit" disabled={busy || belowMin || items.length === 0 || days.length === 0}>
           {busy ? "Starting payment…" : `Pay ${naira(total)} securely`}
         </button>
         {studentRef && <p className="field-note">Student discount applies only if the phone number above is the one you verified with.</p>}

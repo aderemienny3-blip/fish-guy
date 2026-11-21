@@ -33,7 +33,7 @@ export default async function CheckoutPage() {
         />
       ) : (
         <CheckoutClient
-          zones={zones.map((z) => ({ id: z.id, name: z.name, feeKobo: z.feeKobo, freeOverKobo: z.freeOverKobo }))}
+          zones={zones.map((z) => ({ id: z.id, name: z.name, feeKobo: z.feeKobo, freeOverKobo: z.freeOverKobo, minOrderKobo: z.minOrderKobo, deliveryDays: z.deliveryDays, note: z.note }))}
           slots={slots.map((s) => ({ id: s.id, label: s.label, startMinute: s.startMinute }))}
           student={{ percent: rules.percent, maxKobo: rules.maxKobo }}
           pickup={pickupZone ? { id: pickupZone.id, address: BUSINESS.address } : null}

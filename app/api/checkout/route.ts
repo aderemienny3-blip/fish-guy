@@ -5,7 +5,7 @@ import { db } from "@/lib/db";
 import { auth } from "@/lib/customer-auth";
 import { initPaystack } from "@/lib/paystack";
 import { normalizeNgPhone } from "@/lib/phone";
-import { deliveryFeeFor, isSlotBookable } from "@/lib/delivery";
+import { deliveryFeeFor, describeZoneDays, isSlotBookable, zoneAllowsDate } from "@/lib/delivery";
 import { discountFor, findUsableVerification, getStudentRules } from "@/lib/student";
 import { loadLivePromo } from "@/lib/festive";
 import { MAX_QTY, cartonsOf, evaluatePromo, resolveDiscounts } from "@/lib/festive-math";
@@ -71,6 +71,10 @@ export async function POST(req: Request) {
         throw new CheckoutError("That delivery time can no longer be booked. Pick another.");
       }
 
+      if (!zone.isPickup && !zoneAllowsDate(zone, b.deliveryDate)) {
+        throw new CheckoutError(`We only deliver to ${zone.name} on ${describeZoneDays(zone.deliveryDays)}. Pick one of those days.`);
+      }
+
       const taken = await tx.order.count({
         where: {
           slotId: slot.id,
@@ -108,6 +112,10 @@ export async function POST(req: Request) {
           cartonLines.push({ qty, cartonKg: p.cartonKg });
           cartonValue += p.priceKobo * qty;
         }
+      }
+
+      if (!zone.isPickup && zone.minOrderKobo && subtotal < zone.minOrderKobo) {
+        throw new CheckoutError(`Delivery to ${zone.name} needs a minimum order of ₦${(zone.minOrderKobo / 100).toLocaleString("en-NG")}.`);
       }
 
       // Festive carton deal: worked out here from the database, never from the browser.

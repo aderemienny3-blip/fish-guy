@@ -47,7 +47,7 @@ export default async function ProductPage({ params }: Props) {
           <AddToCart product={p} withQuantity />
           {p.cartonKg && p.unit === "kg" && <CartonButton product={p} cartonKg={p.cartonKg} />}
           <ul className="product-facts">
-            <li>Delivered cold across Lagos, except Ikorodu</li>
+            <li>Delivered cold across Lagos (except Ikorodu) and selected Ogun campuses</li>
             <li>Choose your day and time slot at checkout</li>
             <li>Prices may change with supply</li>
           </ul>

@@ -34,3 +34,24 @@ export function deliveryFeeFor(zone: { feeKobo: number; freeOverKobo: number | n
   if (zone.freeOverKobo !== null && subtotalKobo >= zone.freeOverKobo) return 0;
   return zone.feeKobo;
 }
+
+const DAY_FULL = ["Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"];
+
+/** "2,6" -> [2, 6]. Empty or missing means every day. */
+export function zoneDayList(deliveryDays: string | null | undefined): number[] {
+  return (deliveryDays ?? "").split(",").map((s) => s.trim()).filter(Boolean).map(Number).filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
+}
+
+/** Is this YYYY-MM-DD one of the area's delivery weekdays? */
+export function zoneAllowsDate(zone: { deliveryDays?: string | null }, date: string): boolean {
+  const days = zoneDayList(zone.deliveryDays);
+  if (days.length === 0) return true;
+  return days.includes(new Date(date + "T00:00:00Z").getUTCDay());
+}
+
+/** "Tuesdays and Saturdays" */
+export function describeZoneDays(deliveryDays: string | null | undefined): string {
+  const names = zoneDayList(deliveryDays).map((d) => DAY_FULL[d]);
+  if (names.length <= 1) return names[0] ?? "";
+  return names.slice(0, -1).join(", ") + " and " + names[names.length - 1];
+}

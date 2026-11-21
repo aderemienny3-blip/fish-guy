@@ -65,6 +65,9 @@ model DeliveryZone {
   freeOverKobo Int? // free delivery above this subtotal, optional
   active       Boolean @default(true)
   isPickup     Boolean @default(false) // true = collect from the store
+  minOrderKobo Int? // minimum food subtotal for this area
+  deliveryDays String? // weekdays served, e.g. "2,6" = Tue and Sat (Sun=0). Empty = every day
+  note         String? // shown to customers at checkout
   orders       Order[]
 }
 
