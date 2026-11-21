@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { db } from "@/lib/db";
 import { lagosDateOf } from "@/lib/admin/format";
+import { geoFrom } from "@/lib/geo";
 import { MUSIC_SESSION_COOKIE, createSessionToken, hashToken, sessionCookie } from "@/lib/music/session";
 
 export const runtime = "nodejs";
@@ -15,7 +16,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ tra
   const token = existing || createSessionToken();
   // One counted play per listener, per track, per day.
   const r = await db.musicPlay.createMany({
-    data: { trackId: track.id, listenerHash: hashToken(token), playDay: lagosDateOf(new Date()) },
+    data: { trackId: track.id, listenerHash: hashToken(token), playDay: lagosDateOf(new Date()), ...geoFrom(request.headers) },
     skipDuplicates: true,
   });
   const res = NextResponse.json({ recorded: r.count > 0 });

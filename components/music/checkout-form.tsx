@@ -30,7 +30,7 @@ export function CheckoutForm({ trackId, title, priceKobo }: { trackId: string; t
       const response = await fetch('/api/music/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ trackId, buyerName: formData.get('buyerName'), buyerEmail: formData.get('buyerEmail'), idempotencyKey: idempotencyKey.current }),
+        body: JSON.stringify({ trackId, buyerName: formData.get('buyerName'), buyerEmail: formData.get('buyerEmail'), idempotencyKey: idempotencyKey.current, shareWithArtist: formData.get('shareWithArtist') === 'on' }),
       })
       const result = await response.json()
       if (!response.ok) {
@@ -52,9 +52,10 @@ export function CheckoutForm({ trackId, title, priceKobo }: { trackId: string; t
       <form className="checkout-form" onSubmit={submit}>
         <div className="form-field"><label htmlFor="buyer-name">Your name</label><input id="buyer-name" name="buyerName" autoComplete="name" maxLength={100} required /></div>
         <div className="form-field"><label htmlFor="buyer-email">Email for your receipt</label><input id="buyer-email" name="buyerEmail" type="email" autoComplete="email" maxLength={254} required /></div>
+        <label className="checkout-optin"><input type="checkbox" name="shareWithArtist" /> Let the artist see my name and email so they can thank me and tell me about new music (optional)</label>
         <button className="button button-gold" type="submit" disabled={isPending}>{isPending ? 'Connecting…' : `Pay ${formatNaira(priceKobo)} securely`}</button>
         <p className={`form-message ${message && !isPending ? 'is-error' : ''}`} aria-live="polite">{message}</p>
-        <p className="checkout-disclaimer">The full audio download is delivered privately after Paystack confirms payment.</p>
+        <p className="checkout-disclaimer">The full audio download is delivered privately after Paystack confirms payment. Artists see your first name and approximate location (city or state) with each sale.</p>
       </form>
     </section>
   )

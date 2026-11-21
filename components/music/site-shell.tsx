@@ -39,6 +39,7 @@ export function SiteFooter() {
         <Link href="/student">Student discount</Link>
         <Link href="/advertise">Advertise your music</Link>
         <Link href="/sounds/apply">Artist application</Link>
+        <Link href="/artist/login">Artist sign in</Link>
         <Link href="/delivery-refunds">Delivery &amp; refunds</Link>
         <Link href="/terms">Terms</Link>
         <Link href="/privacy">Privacy</Link>

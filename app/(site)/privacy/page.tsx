@@ -11,7 +11,7 @@ export default function Privacy() {
           <li>Orders: your name, phone number, email, delivery address, landmark and any note you add, and what you ordered.</li>
           <li>Payments: handled by Paystack. We receive confirmation and the payment method type. We never see or store your card details.</li>
           <li>Student discount: your name, phone, email, school, matric number and a photo of your student ID.</li>
-          <li>Music: if you buy or download a track, the purchase and download records. Play counts are recorded for artists without being linked to your name.</li>
+          <li>Music: if you buy or download a track, the purchase and download records. Play counts are recorded for artists without being linked to your name, together with your approximate location (state or city, worked out from your internet connection). Artists see each buyer's first name and approximate location. Your email is shared with the artist only if you tick the box at checkout.</li>
           <li>Basic technical data such as your browser type, used to keep the site working and secure.</li>
         </ul>
       </Section>

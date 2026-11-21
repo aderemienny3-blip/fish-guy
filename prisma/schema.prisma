@@ -298,6 +298,9 @@ model MusicPlay {
   listenerHash String
   playDay      String
   playedAt     DateTime @default(now())
+  country      String?
+  region       String?
+  city         String?
   track        Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
 
   @@unique([trackId, listenerHash, playDay])
@@ -317,6 +320,10 @@ model MusicOrder {
   status           MusicOrderStatus @default(PENDING)
   createdAt        DateTime         @default(now())
   paidAt           DateTime?
+  country          String?
+  region           String?
+  city             String?
+  shareWithArtist  Boolean          @default(false)
   items            MusicOrderItem[]
 
   @@index([buyerSessionHash, status])
@@ -359,6 +366,20 @@ model ArtistApplication {
   createdAt   DateTime          @default(now())
 }
 
+
+// ---- ARTIST DASHBOARD LOGIN ----
+
+model ArtistCode {
+  id        String    @id @default(cuid())
+  email     String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int       @default(0)
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([email, createdAt])
+}
 
 // ---- FISH GUY STUDENT DISCOUNT ----
 

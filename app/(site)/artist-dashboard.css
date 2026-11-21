@@ -1,0 +1,30 @@
+.site-root .artist-dash{display:grid;gap:22px}
+.site-root .ad-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.site-root .ad-head h1{margin:0}
+.site-root .ad-switch{display:flex;flex-wrap:wrap;gap:8px}
+.site-root .ad-switch a{padding:8px 14px;border:1px solid rgba(245,241,230,.25);border-radius:999px;color:#F5F1E6;text-decoration:none}
+.site-root .ad-switch a[aria-current]{background:#D4AF37;color:#0A0A0A;border-color:#D4AF37}
+.site-root .ad-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px}
+.site-root .ad-cards>div{background:#141414;border:1px solid rgba(245,241,230,.12);border-radius:14px;padding:18px;display:grid;gap:4px}
+.site-root .ad-cards span{color:#B8B2A0;font-size:.85rem}
+.site-root .ad-cards b{font-size:1.9rem;color:#F5F1E6}
+.site-root .ad-cards small{color:#9A9585;font-size:.78rem}
+.site-root .ad-block{background:#141414;border:1px solid rgba(245,241,230,.12);border-radius:14px;padding:18px;display:grid;gap:12px}
+.site-root .ad-block h2{margin:0;font-size:1.05rem;color:#D4AF37}
+.site-root .ad-two{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.site-root .ad-bars{display:flex;align-items:flex-end;gap:3px;height:96px}
+.site-root .ad-bars span{flex:1;min-width:2px;background:rgba(245,241,230,.15);border-radius:2px 2px 0 0}
+.site-root .ad-bars span.on{background:#D4AF37}
+.site-root .ad-places{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.site-root .ad-places li{display:grid;grid-template-columns:minmax(90px,1.2fr) 2fr auto;gap:10px;align-items:center;font-size:.92rem}
+.site-root .ad-meter{height:8px;background:rgba(245,241,230,.1);border-radius:99px;overflow:hidden}
+.site-root .ad-meter i{display:block;height:100%;background:#D4AF37}
+.site-root .ad-places small{color:#9A9585;font-weight:400}
+.site-root .ad-table{display:grid;gap:2px;overflow-x:auto}
+.site-root .ad-row{display:grid;grid-template-columns:2fr 1fr 1fr 1.2fr;gap:10px;padding:10px 6px;border-bottom:1px solid rgba(245,241,230,.08);font-size:.92rem;min-width:420px}
+.site-root .ad-row.ad-buyers{grid-template-columns:1.5fr 1.5fr 1.5fr 1fr 1fr;min-width:620px}
+.site-root .ad-hd{color:#9A9585;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em}
+.site-root .ad-mail{display:block;font-size:.75rem}
+.site-root .ad-mail a{color:#D4AF37}
+.site-root .ad-note,.site-root .ad-empty{margin:0;color:#9A9585;font-size:.82rem}
+.site-root .ad-row em{color:#9A9585;font-style:normal}

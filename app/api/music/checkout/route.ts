@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { initPaystack, isPaystackCheckoutUrl } from "@/lib/paystack";
+import { geoFrom } from "@/lib/geo";
 import { MUSIC_SESSION_COOKIE, createSessionToken, hashToken, sessionCookie } from "@/lib/music/session";
 
 export const runtime = "nodejs";
@@ -48,6 +49,8 @@ export async function POST(request: Request) {
         reference: `FGS-${randomUUID().replaceAll("-", "").toUpperCase()}`,
         amountKobo: track.priceKobo,
         idempotencyKey,
+        ...geoFrom(request.headers),
+        shareWithArtist: body?.shareWithArtist === true,
         items: { create: { trackId: track.id, unitPriceKobo: track.priceKobo } },
       },
       include: { items: true },

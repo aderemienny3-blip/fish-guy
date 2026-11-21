@@ -12,7 +12,7 @@ export const BUSINESS = {
   email: "Hellothefishguy@gmail.com",
   instagram: "fishguyfrozenstore",
   // Your policy: how long after delivery a customer can report a problem (hours).
-  reportWindowHours: 24,
+  reportWindowHours: 8,
   lastUpdated: "17 November 2026",
 };
 
