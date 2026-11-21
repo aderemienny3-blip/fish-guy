@@ -27,7 +27,7 @@ export type MusicArtist = {
   isFeatured: boolean;
 };
 
-export const GENRES = ["Afrobeats-hip-hop", "Street rap", "Drill", "Trap", "Boom bap"];
+export const GENRES = ["Hip-hop", "Street rap", "Drill", "Trap", "Boom bap"];
 
 const withArtist = { artist: true } as const;
 
