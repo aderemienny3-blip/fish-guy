@@ -1,8 +1,27 @@
-Fan engagement data, superfan exclusives, fan announcements
-Needs the artist-dashboard, copyright and sales zips installed first.
-1. Expand-Archive -Force "$env:USERPROFILE\Downloads\fish-guy-fans.zip" -DestinationPath .
-2. node scripts/patch-fans.mjs              (must end "All done.")
-3. npx prisma migrate dev --name fans
-4. Remove-Item -Recurse -Force .next ; npm run build
-5. git add . ; git commit -m "Fan data, superfans, announcements" ; git push
-Needs RESEND_API_KEY, NOTIFY_FROM (a verified sender is best), NEXT_PUBLIC_SITE_URL and AUTH_SECRET in Vercel.
+Fish Guy: download protection and player upgrades (batch 3)
+
+Install the sales and fans zips first.
+
+From the project folder, in the VS Code terminal:
+
+Expand-Archive -Force "$env:USERPROFILE\Downloads\fish-guy-protection.zip" -DestinationPath .
+node scripts/patch-protect.mjs
+npx prisma migrate dev --name protection
+Remove-Item -Recurse -Force .next
+npm run build
+git add .
+git commit -m "Download protection and player upgrades"
+git push
+
+If the migration asks to reset the database, answer No.
+Send me any line that starts with SKIP.
+
+What you get
+- Each purchase has 5 downloads per file type (MP3, WAV). A link is counted once, when first opened. A resumed download still works for 15 minutes.
+- Max 10 download links per purchase per hour.
+- Buyers see "downloads left" in My Library.
+- Admin, Music downloads: buyers at the limit, or downloading from 3+ countries, listed first, with a "Give 5 more" button.
+- Other websites cannot embed or hotlink your audio or downloads.
+- Player: Space (play/pause), Left/Right (skip 10s), N (next), M (mute), repeat-this-track button, "Buffering" note, remembered volume, and "30-second preview. Get the full track" link when a listener has not bought it.
+
+Honest note: no website can fully stop someone recording what they hear. These limits stop casual sharing and make abuse visible. Watermarking each buyer's file is a bigger later project.

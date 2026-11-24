@@ -28,7 +28,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ tra
   const listenerHash = hashToken(token);
   const cap = Math.min(seconds, track.durationSeconds + 2);
 
-  let result: { ok: boolean; id?: string };
+  let result: { ok: boolean; id?: string; full?: boolean };
   if (id) {
     const row = await db.listenEvent.findFirst({ where: { id, trackId, listenerHash } });
     if (!row) return NextResponse.json({ ok: false }, { status: 404 });
@@ -45,7 +45,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ tra
     if (today >= 25) return NextResponse.json({ ok: false }, { status: 429 });
     const isFull = await canHearFull(track, hashToken(token));
     const row = await db.listenEvent.create({ data: { trackId, listenerHash, day, maxSeconds: cap, isFull, ...geoFrom(request.headers) } });
-    result = { ok: true, id: row.id };
+    result = { ok: true, id: row.id, full: isFull };
   }
 
   const res = NextResponse.json(result);

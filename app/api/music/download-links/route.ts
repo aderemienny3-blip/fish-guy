@@ -2,6 +2,7 @@ import { randomBytes } from "node:crypto";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionHash, hashToken } from "@/lib/music/session";
+import { MAX_DOWNLOADS, MAX_LINKS_PER_HOUR } from "@/lib/music/download-limits";
 
 export const runtime = "nodejs";
 
@@ -28,8 +29,19 @@ export async function POST(request: Request) {
   const path = format === "wav" ? item?.track.wavPath : item?.track.mp3Path;
   if (!item || !path) return NextResponse.json({ error: "That format is not available for this purchase." }, { status: 404 });
 
+  const usedBefore = await db.musicDownloadLink.count({
+    where: { orderItemId: item.id, format, usedAt: { not: null, gte: item.downloadsFrom ?? new Date(0) } },
+  });
+  if (usedBefore >= MAX_DOWNLOADS) {
+    return NextResponse.json({ error: `You have used all ${MAX_DOWNLOADS} downloads of this file. Contact Fish Guy and we will reset them.` }, { status: 403 });
+  }
+  const recent = await db.musicDownloadLink.count({ where: { orderItemId: item.id, createdAt: { gte: new Date(Date.now() - 3_600_000) } } });
+  if (recent >= MAX_LINKS_PER_HOUR) {
+    return NextResponse.json({ error: "Too many download attempts. Please try again in an hour." }, { status: 429 });
+  }
+
   const token = randomBytes(32).toString("base64url");
   const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
   await db.musicDownloadLink.create({ data: { orderItemId: item.id, tokenHash: hashToken(token), format, expiresAt } });
-  return NextResponse.json({ url: `/api/music/downloads/${token}`, expiresAt: expiresAt.toISOString() }, { status: 201 });
+  return NextResponse.json({ url: `/api/music/downloads/${token}`, expiresAt: expiresAt.toISOString(), remaining: MAX_DOWNLOADS - usedBefore - 1 }, { status: 201 });
 }

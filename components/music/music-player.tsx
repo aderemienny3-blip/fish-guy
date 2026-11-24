@@ -1,7 +1,7 @@
 'use client'
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
-import { Pause, Play, Shuffle, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react'
+import { Pause, Play, Repeat, Shuffle, SkipBack, SkipForward, Volume2, VolumeX } from 'lucide-react'
 import type { MusicTrack } from '@/lib/music/data'
 import { formatDuration } from '@/lib/music/format'
 import { CoverArtwork } from '@/components/music/site-shell'
@@ -16,6 +16,10 @@ type MusicPlayerContextValue = {
   duration: number
   volume: number
   isMuted: boolean
+  isBuffering: boolean
+  isPreview: boolean
+  repeatOne: boolean
+  toggleRepeat: () => void
   playTrack: (track: MusicTrack, queue: MusicTrack[]) => void
   /** Start the house playlist (your shop playlist, or free tracks). Returns false when there is no music yet. */
   startQueue: () => Promise<boolean>
@@ -32,6 +36,7 @@ type MusicPlayerContextValue = {
 
 const MusicPlayerContext = createContext<MusicPlayerContextValue | null>(null)
 const MUTE_PREFERENCE_KEY = 'fish-guy-sounds-muted-v1'
+const VOLUME_KEY = 'fish-guy-sounds-volume-v1'
 // A one-frame silent clip. Playing it inside the tap unlocks audio on iPhones before the real track has loaded.
 const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA='
 
@@ -53,6 +58,9 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
   const [duration, setDuration] = useState(0)
   const [volume, setVolumeState] = useState(0.78)
   const [isMuted, setIsMuted] = useState(false)
+  const [isBuffering, setIsBuffering] = useState(false)
+  const [isPreview, setIsPreview] = useState(false)
+  const [repeatOne, setRepeatOne] = useState(false)
 
   useEffect(() => { currentRef.current = currentTrack }, [currentTrack])
   useEffect(() => {
@@ -76,6 +84,8 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     setCurrentTime(0)
     setDuration(0)
     setIsPlaying(true)
+    setIsPreview(false)
+    setIsBuffering(false)
     setNotice('')
 
     if (!audio) return
@@ -199,6 +209,7 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
   }, [pick, playTrack, queue])
 
   const toggleShuffle = useCallback(() => setIsShuffle((v) => !v), [])
+  const toggleRepeat = useCallback(() => setRepeatOne((v) => !v), [])
 
   const toggleMute = useCallback(() => {
     setIsMuted((previous) => {
@@ -211,6 +222,7 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
   const setVolume = useCallback((value: number) => {
     const safeValue = Math.min(1, Math.max(0, value))
     setVolumeState(safeValue)
+    try { window.localStorage.setItem(VOLUME_KEY, String(safeValue)) } catch { /* storage unavailable */ }
     if (safeValue > 0) {
       setIsMuted(false)
       try { window.localStorage.setItem(MUTE_PREFERENCE_KEY, 'false') } catch { /* storage unavailable */ }
@@ -221,8 +233,29 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     if (audioRef.current && Number.isFinite(value)) audioRef.current.currentTime = value
   }, [])
 
+  // Space = play or pause, arrows = skip 10 seconds, N = next, M = mute. Ignored while typing or on a button or link.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!currentRef.current || e.ctrlKey || e.metaKey || e.altKey) return
+      const t = e.target as HTMLElement | null
+      if (t && (t.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A'].includes(t.tagName))) return
+      const audio = audioRef.current
+      if (e.key === ' ') { e.preventDefault(); togglePlayback() }
+      else if (e.key === 'ArrowRight' && audio) { e.preventDefault(); audio.currentTime = Math.min((audio.duration || audio.currentTime + 10), audio.currentTime + 10) }
+      else if (e.key === 'ArrowLeft' && audio) { e.preventDefault(); audio.currentTime = Math.max(0, audio.currentTime - 10) }
+      else if (e.key === 'n' || e.key === 'N') playNext()
+      else if (e.key === 'm' || e.key === 'M') toggleMute()
+    }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [togglePlayback, playNext, toggleMute])
+
   useEffect(() => {
     try { setIsMuted(window.localStorage.getItem(MUTE_PREFERENCE_KEY) === 'true') } catch { setIsMuted(false) }
+    try {
+      const saved = Number(window.localStorage.getItem(VOLUME_KEY))
+      if (window.localStorage.getItem(VOLUME_KEY) !== null && Number.isFinite(saved)) setVolumeState(Math.min(1, Math.max(0, saved)))
+    } catch { /* storage unavailable */ }
   }, [])
 
   useEffect(() => {
@@ -291,7 +324,7 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
       l.started = true
       const mine = l
       void fetch(`/api/music/listens/${encodeURIComponent(track.id)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seconds: Math.floor(mine.heard) }) })
-        .then((r) => r.json()).then((j) => { if (j?.id) mine.id = j.id }).catch(() => undefined)
+        .then((r) => r.json()).then((j) => { if (j?.id) mine.id = j.id; if (j && j.full === false && listenRef.current === mine) setIsPreview(true) }).catch(() => undefined)
     }
     if (l.id && !l.sent30 && l.heard >= 30) { l.sent30 = true; postListen(track.id, { id: l.id, seconds: Math.floor(l.heard) }) }
   }
@@ -308,6 +341,7 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
   const onEnded = () => {
     if (!currentRef.current) return
     flushListenRef.current(true)
+    if (repeatOne && audioRef.current) { listenRef.current = null; audioRef.current.currentTime = 0; void audioRef.current.play().catch(() => setIsPlaying(false)); return }
     if ((audioRef.current?.currentTime ?? 0) >= 30) recordCurrentPlay()
     const next = pick(1)
     if (next) { playTrack(next, queue); return }
@@ -328,9 +362,9 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
   }
 
   const value = useMemo(() => ({
-    currentTrack, isPlaying, isShuffle, isStarting, notice, currentTime, duration, volume, isMuted,
+    currentTrack, isPlaying, isShuffle, isStarting, notice, currentTime, duration, volume, isMuted, isBuffering, isPreview, repeatOne, toggleRepeat,
     playTrack, startQueue, playById, togglePlayback, playNext, playPrevious, toggleShuffle, toggleMute, setVolume, seek,
-  }), [currentTrack, isPlaying, isShuffle, isStarting, notice, currentTime, duration, volume, isMuted,
+  }), [currentTrack, isPlaying, isShuffle, isStarting, notice, currentTime, duration, volume, isMuted, isBuffering, isPreview, repeatOne, toggleRepeat,
     playTrack, startQueue, playById, togglePlayback, playNext, playPrevious, toggleShuffle, toggleMute, setVolume, seek])
 
   return (
@@ -341,10 +375,12 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
         preload="none"
         onTimeUpdate={onTimeUpdate}
         onLoadedMetadata={() => { if (currentRef.current && audioRef.current && Number.isFinite(audioRef.current.duration)) setDuration(audioRef.current.duration) }}
-        onPlaying={() => { errorStreak.current = 0; if (currentRef.current) setIsPlaying(true) }}
+        onPlaying={() => { errorStreak.current = 0; setIsBuffering(false); if (currentRef.current) setIsPlaying(true) }}
         onPlay={() => { if (currentRef.current) setIsPlaying(true) }}
         onPause={() => { if (currentRef.current) setIsPlaying(false) }}
         onEnded={onEnded}
+        onWaiting={() => { if (currentRef.current) setIsBuffering(true) }}
+        onCanPlay={() => setIsBuffering(false)}
         onError={onError}
       />
     </MusicPlayerContext.Provider>
@@ -359,7 +395,7 @@ export function useMusicPlayer() {
 
 /** The player bar is always on screen, so there is always a Play button. */
 export function MiniPlayer() {
-  const { currentTrack, isPlaying, isShuffle, isStarting, notice, currentTime, duration, volume, isMuted, togglePlayback, startQueue, playNext, playPrevious, toggleShuffle, toggleMute, setVolume, seek } = useMusicPlayer()
+  const { currentTrack, isPlaying, isShuffle, isStarting, notice, currentTime, duration, volume, isMuted, isBuffering, isPreview, repeatOne, toggleRepeat, togglePlayback, startQueue, playNext, playPrevious, toggleShuffle, toggleMute, setVolume, seek } = useMusicPlayer()
   const maxDuration = duration || currentTrack?.durationSeconds || 0
   const onPlay = () => { if (currentTrack) togglePlayback(); else void startQueue() }
 
@@ -369,7 +405,7 @@ export function MiniPlayer() {
         {currentTrack ? (
           <>
             <CoverArtwork src={currentTrack.coverImageUrl} alt={`${currentTrack.title} cover art`} className="player-cover" />
-            <div className="player-track-copy"><strong>{currentTrack.title}</strong><span>{currentTrack.artistName}</span></div>
+            <div className="player-track-copy"><strong>{currentTrack.title}</strong><span>{currentTrack.artistName}{isBuffering ? ' · Buffering…' : ''}</span>{isPreview && <a className="player-preview" href={`/sounds/${currentTrack.slug}`}>30-second preview · Get the full track</a>}</div>
           </>
         ) : (
           <div className="player-empty" aria-live="polite">
@@ -381,6 +417,7 @@ export function MiniPlayer() {
       <div className="player-center">
         <div className="player-controls">
           <button className={`player-icon-button ${isShuffle ? 'is-on' : ''}`} type="button" aria-label="Shuffle" aria-pressed={isShuffle} onClick={toggleShuffle}><Shuffle aria-hidden="true" /></button>
+          <button className={`player-icon-button ${repeatOne ? 'is-on' : ''}`} type="button" aria-label="Repeat this track" aria-pressed={repeatOne} onClick={toggleRepeat}><Repeat aria-hidden="true" /></button>
           <button className="player-icon-button" type="button" aria-label="Previous track" disabled={!currentTrack} onClick={playPrevious}><SkipBack aria-hidden="true" /></button>
           <button className="player-icon-button player-play-button" type="button" aria-label={isPlaying ? 'Pause music' : 'Play music'} disabled={isStarting} onClick={onPlay}>
             {isPlaying ? <Pause fill="currentColor" aria-hidden="true" /> : <Play fill="currentColor" aria-hidden="true" />}

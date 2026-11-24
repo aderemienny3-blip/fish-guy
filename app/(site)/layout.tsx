@@ -18,6 +18,7 @@ import "./music-play.css";
 import "./playlists.css";
 import "./artist-dashboard.css";
 import "./fans.css";
+import "./protect.css";
 
 export const metadata: Metadata = {
   title: "Fish Guy | Frozen Food Delivery in Lagos",

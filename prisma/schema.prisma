@@ -353,6 +353,7 @@ model MusicOrderItem {
   order         MusicOrder          @relation(fields: [orderId], references: [id], onDelete: Cascade)
   track         Track               @relation(fields: [trackId], references: [id], onDelete: Restrict)
   editionNo     Int?
+  downloadsFrom DateTime?
   downloadLinks MusicDownloadLink[]
 
   @@index([orderId])
@@ -366,6 +367,9 @@ model MusicDownloadLink {
   format      String
   expiresAt   DateTime
   createdAt   DateTime       @default(now())
+  usedAt     DateTime?
+  country    String?
+  region     String?
   orderItem   MusicOrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
 }
 

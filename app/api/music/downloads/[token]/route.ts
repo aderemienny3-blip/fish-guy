@@ -2,11 +2,14 @@ import { get } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionHash, hashToken } from "@/lib/music/session";
+import { crossSite } from "@/lib/music/guard";
+import { geoFrom } from "@/lib/geo";
 
 export const runtime = "nodejs";
 
-export async function GET(_req: Request, { params }: { params: Promise<{ token: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
+  if (crossSite(req)) return NextResponse.json({ error: "Open this link from the Fish Guy website." }, { status: 403 });
   const sessionHash = await getSessionHash();
   const bad = () => NextResponse.json({ error: "Download link is invalid or expired." }, { status: 404 });
   if (!sessionHash || !/^[A-Za-z0-9_-]{40,50}$/.test(token)) return bad();
@@ -22,6 +25,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ token: 
   const track = link?.orderItem.track;
   const path = link?.format === "wav" ? track?.wavPath : track?.mp3Path;
   if (!link || !track || !path) return bad();
+  const where = geoFrom(req.headers);
+  await db.musicDownloadLink.updateMany({ where: { id: link.id, usedAt: null }, data: { usedAt: new Date(), country: where.country, region: where.region } });
 
   try {
     const blob = await get(path, { access: "private" });

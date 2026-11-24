@@ -19,7 +19,7 @@ export function DownloadButtons({ orderItemId, hasMp3, hasWav }: { orderItemId: 
       })
       const result = await response.json()
       if (!response.ok || typeof result.url !== 'string') throw new Error(result.error || 'A download link could not be created.')
-      setMessage(`Link expires ${new Date(result.expiresAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}.`)
+      setMessage(`Link expires ${new Date(result.expiresAt).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}.${typeof result.remaining === 'number' ? ` ${result.remaining} downloads left for this file.` : ''}`)
       window.location.assign(result.url)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'A download link could not be created.')

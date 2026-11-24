@@ -16,7 +16,7 @@ export default async function LibraryPage() {
       <section className="library-intro">
         <p className="eyebrow">YOUR MUSIC, YOURS TO KEEP</p>
         <h1>My Library</h1>
-        <p>Purchased releases show here after Paystack confirms payment. Download links are private, expire after 15 minutes, and can be generated again whenever you need them.</p>
+        <p>Purchased releases show here after Paystack confirms payment. Download links are private and expire after 15 minutes. Each purchase includes 5 downloads of each file type. If you need more, contact us.</p>
       </section>
       {items.length ? (
         <div className="library-list" aria-label="Purchased tracks">

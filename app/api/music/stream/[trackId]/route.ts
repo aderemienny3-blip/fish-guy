@@ -2,6 +2,7 @@ import { get } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionHash } from "@/lib/music/session";
+import { crossSite } from "@/lib/music/guard";
 import { canHearFull } from "@/lib/music/access";
 
 export const runtime = "nodejs";
@@ -9,6 +10,7 @@ export const runtime = "nodejs";
 // Free tracks and buyers get the full file; everyone else gets the 30-second preview.
 export async function GET(request: Request, { params }: { params: Promise<{ trackId: string }> }) {
   const { trackId } = await params;
+  if (crossSite(request)) return NextResponse.json({ error: "Not available." }, { status: 403 });
   const track = await db.track.findFirst({ where: { id: trackId, isPublished: true } });
   if (!track) return NextResponse.json({ error: "Track not found." }, { status: 404 });
 
