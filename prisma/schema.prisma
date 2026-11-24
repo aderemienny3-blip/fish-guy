@@ -269,6 +269,7 @@ model Artist {
 
 model Track {
   id              String           @id @default(cuid())
+  isrc            String?          @unique
   artistId        String
   slug            String           @unique
   title           String

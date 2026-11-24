@@ -19,6 +19,7 @@ export default function manifest(): MetadataRoute.Manifest {
     shortcuts: [
       { name: "Shop", url: "/shop" },
       { name: "My orders", url: "/orders" },
+      { name: "Fish Guy Sounds", url: "/sounds" },
     ],
   };
 }

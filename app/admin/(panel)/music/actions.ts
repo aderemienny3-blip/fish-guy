@@ -3,6 +3,7 @@
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { MANAGERS, requireAdmin } from "@/lib/admin/auth";
+import { normalizeIsrc } from "@/lib/music/isrc";
 import { bail, isUniqueError, nairaToKobo, slugify, str } from "@/lib/admin/format";
 import { GENRES } from "@/lib/music/data";
 
@@ -83,6 +84,9 @@ export async function createTrack(fd: FormData) {
   const yearRaw = Math.round(Number(str(fd, "copyrightYear")));
   const copyrightYear = yearRaw >= 1900 && yearRaw <= new Date().getFullYear() + 1 ? yearRaw : new Date().getFullYear();
   const copyrightOwner = str(fd, "copyrightOwner").slice(0, 120) || null;
+  const isrc = normalizeIsrc(str(fd, "isrc"));
+  if (isrc === null) bail(back, "That is not a valid ISRC. It has 12 characters, like NGABC2400001.");
+  if (isrc && (await db.track.findFirst({ where: { isrc }, select: { id: true } }))) bail(back, "That ISRC is already used by another track.");
   if (!GENRES.includes(genre)) bail(back, "Choose a genre.");
   if (priceKobo === null) bail(back, "Enter a valid price in naira (0 for free).");
   if (!Number.isFinite(duration) || duration <= 0) bail(back, "The track length could not be read. Try the MP3 again.");
@@ -111,6 +115,7 @@ export async function createTrack(fd: FormData) {
         rightsConfirmedBy: admin.email,
         copyrightOwner,
         copyrightYear,
+        isrc: isrc || null,
         slug: `${slug}-${Math.random().toString(36).slice(2, 6)}`,
         isPublished: false,
       },

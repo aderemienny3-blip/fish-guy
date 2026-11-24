@@ -5,6 +5,7 @@ import { MANAGERS, requireAdmin } from "@/lib/admin/auth";
 import { Banner, PageHeader, btn, btnGhost, card, input, label } from "@/components/admin/ui";
 import { editionTaken, toLagosInput } from "@/lib/music/sales";
 import { saveSale } from "./actions";
+import { saveMetadata } from "./metadata-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +51,18 @@ export default async function SaleSettings({ params, searchParams }: { params: P
           <p className="text-xs text-[#9A9585]">{t.editionLimit ? `${taken} of ${t.editionLimit} copies sold or being bought now. ` : ""}Each buyer gets a number, like No. 14 of 100. Unpaid checkouts hold a copy for 60 minutes.</p>
         </div>
         <button className={btn}>Save sale settings</button>
+      </form>
+
+      <form action={saveMetadata} className={`${card} mt-6 max-w-2xl space-y-4 p-6`}>
+        <input type="hidden" name="id" value={t.id} />
+        <h2 className="text-lg font-medium">File labels</h2>
+        <p className="text-sm text-[#9A9585]">These are written into every MP3 a fan downloads, so the song shows its title, artist, cover and copyright in any music app. The ISRC is the recording&apos;s international ID, issued by an ISRC agency or the artist&apos;s distributor. Leave it blank if the artist does not have one yet.</p>
+        <div><label className={label}>ISRC (12 characters, like NGABC2400001)</label><input name="isrc" defaultValue={t.isrc ?? ""} maxLength={20} className={input} /></div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div><label className={label}>Copyright owner (blank = the artist)</label><input name="copyrightOwner" defaultValue={t.copyrightOwner ?? ""} maxLength={120} className={input} /></div>
+          <div><label className={label}>Copyright year</label><input name="copyrightYear" defaultValue={t.copyrightYear ?? new Date().getFullYear()} inputMode="numeric" className={input} /></div>
+        </div>
+        <button className={btn}>Save file labels</button>
       </form>
     </>
   );

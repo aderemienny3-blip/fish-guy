@@ -6,6 +6,7 @@ import { artistStats } from "@/lib/artist-stats";
 import { MAX_PER_WEEK, recipientsFor } from "@/lib/announce";
 import { share } from "@/lib/artist-math";
 import { formatNaira } from "@/lib/money";
+import { RosterOverview } from "@/components/artist/roster-overview";
 import { artistLogout } from "./actions";
 import { submitAnnouncement } from "./announce-actions";
 
@@ -58,6 +59,22 @@ export default async function ArtistDashboard({ searchParams }: { searchParams: 
       </main>
     );
   }
+  if (artists.length > 1 && (q.a === "all" || !q.a)) {
+    return (
+      <main className="page-width utility-page artist-dash">
+        <p className="eyebrow">ROSTER</p>
+        <div className="ad-head">
+          <h1>All your artists</h1>
+          <form action={artistLogout}><button className="button button-outline" type="submit">Sign out</button></form>
+        </div>
+        <nav className="ad-switch" aria-label="Your artist profiles">
+          <Link href="/artist?a=all" aria-current="page">All artists</Link>
+          {artists.map((x) => <Link key={x.id} href={`/artist?a=${x.id}`}>{x.name}</Link>)}
+        </nav>
+        <RosterOverview artists={artists} />
+      </main>
+    );
+  }
   const artist = artists.find((x) => x.id === q.a) ?? artists[0];
   const [s, announcements, allFans, superfans] = await Promise.all([
     artistStats(artist.id),
@@ -79,6 +96,7 @@ export default async function ArtistDashboard({ searchParams }: { searchParams: 
       </div>
       {artists.length > 1 && (
         <nav className="ad-switch" aria-label="Your artist profiles">
+          <Link href="/artist?a=all">All artists</Link>
           {artists.map((x) => <Link key={x.id} href={`/artist?a=${x.id}`} aria-current={x.id === artist.id ? "page" : undefined}>{x.name}</Link>)}
         </nav>
       )}
