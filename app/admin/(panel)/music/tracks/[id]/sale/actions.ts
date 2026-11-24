@@ -13,6 +13,16 @@ export async function saveSale(fd: FormData) {
   const t = await db.track.findUnique({ where: { id }, select: { id: true, isFreeToStream: true } });
   if (!t) bail("/admin/music", "Track not found.");
 
+  const exclusive = fd.get("superfanOnly") === "on";
+  if (exclusive) {
+    // A superfan exclusive is not for sale: no price, no pay-what-you-want, no edition.
+    const releaseRaw = str(fd, "releaseAt");
+    const releaseAt = releaseRaw ? parseLagosLocal(releaseRaw) : null;
+    if (releaseRaw && !releaseAt) bail(back, "Enter a valid release date and time.");
+    await db.track.update({ where: { id }, data: { isSuperfanOnly: true, priceKobo: 0, payWhatYouWant: false, suggestedKobo: null, editionLimit: null, releaseAt } });
+    redirect(`${back}?saved=1`);
+  }
+
   const priceKobo = nairaToKobo(str(fd, "price"));
   if (priceKobo === null || priceKobo <= 0) bail(back, "Enter a price above zero.");
   const pwyw = fd.get("payWhatYouWant") === "on";
@@ -41,7 +51,7 @@ export async function saveSale(fd: FormData) {
 
   await db.track.update({
     where: { id },
-    data: { priceKobo, payWhatYouWant: pwyw, suggestedKobo, releaseAt, editionLimit },
+    data: { isSuperfanOnly: false, priceKobo, payWhatYouWant: pwyw, suggestedKobo, releaseAt, editionLimit },
   });
   redirect(`${back}?saved=1`);
 }

@@ -1,0 +1,4 @@
+.site-root .ad-row.ad-tracks{grid-template-columns:2fr .9fr .9fr .9fr .7fr 1fr;min-width:680px}
+.site-root .artist-dash .account-card{display:grid;gap:12px;max-width:560px}
+.site-root .artist-dash .account-card label{display:grid;gap:6px;font-size:.9rem;color:#B8B2A0}
+.site-root .artist-dash .account-card input,.site-root .artist-dash .account-card select,.site-root .artist-dash .account-card textarea{background:#0A0A0A;color:#F5F1E6;border:1px solid rgba(245,241,230,.25);border-radius:8px;padding:10px;font:inherit}

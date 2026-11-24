@@ -17,6 +17,8 @@ export type MusicTrack = {
   artistImageUrl: string | null;
   playCount: number;
   copyrightLine: string;
+  isSuperfanOnly: boolean;
+  artistId: string;
 };
 
 export type MusicArtist = {
@@ -60,6 +62,8 @@ function toView(t: Row, playCount = 0): MusicTrack {
     artistImageUrl: t.artist.imageUrl,
     playCount,
     copyrightLine: copyrightLine({ owner: t.copyrightOwner, year: t.copyrightYear, fallbackOwner: t.artist.name, fallbackYear: (t.releasedAt ?? t.createdAt).getFullYear() }),
+    isSuperfanOnly: t.isSuperfanOnly,
+    artistId: t.artistId,
   };
 }
 

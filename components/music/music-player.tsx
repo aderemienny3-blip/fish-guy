@@ -38,6 +38,8 @@ const SILENT = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAA
 export function MusicPlayerProvider({ children }: { children: React.ReactNode }) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const playedTrackIds = useRef(new Set<string>())
+  const listenRef = useRef<{ trackId: string; id: string | null; heard: number; last: number; started: boolean; sent30: boolean } | null>(null)
+  const flushListenRef = useRef<(ended?: boolean) => void>(() => undefined)
   const currentRef = useRef<MusicTrack | null>(null)
   const errorStreak = useRef(0)
   const [currentTrack, setCurrentTrack] = useState<MusicTrack | null>(null)
@@ -53,6 +55,11 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
   const [isMuted, setIsMuted] = useState(false)
 
   useEffect(() => { currentRef.current = currentTrack }, [currentTrack])
+  useEffect(() => {
+    const leave = () => flushListenRef.current()
+    window.addEventListener('pagehide', leave)
+    return () => window.removeEventListener('pagehide', leave)
+  }, [])
 
   const say = useCallback((text: string) => {
     setNotice(text)
@@ -61,6 +68,8 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
 
   const playTrack = useCallback((track: MusicTrack, nextQueue: MusicTrack[]) => {
     const audio = audioRef.current
+    flushListenRef.current()
+    listenRef.current = null
     currentRef.current = track
     setCurrentTrack(track)
     setQueue(nextQueue.length ? nextQueue : [track])
@@ -254,16 +263,51 @@ export function MusicPlayerProvider({ children }: { children: React.ReactNode })
     void fetch(`/api/music/plays/${encodeURIComponent(currentTrack.id)}`, { method: 'POST' }).catch(() => undefined)
   }
 
+  const postListen = (trackId: string, body: object, beacon = false) => {
+    const url = `/api/music/listens/${encodeURIComponent(trackId)}`
+    const json = JSON.stringify(body)
+    try {
+      if (beacon && navigator.sendBeacon && navigator.sendBeacon(url, new Blob([json], { type: 'application/json' }))) return
+    } catch { /* fall back to fetch */ }
+    void fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: json, keepalive: true }).catch(() => undefined)
+  }
+
+  flushListenRef.current = (ended = false) => {
+    const l = listenRef.current
+    if (!l?.id) return
+    postListen(l.trackId, { id: l.id, seconds: Math.floor(l.heard), ended }, true)
+  }
+
+  // Counts time actually played (seeking forward does not count), so artists see real listening.
+  const trackListen = (t: number) => {
+    const track = currentRef.current
+    if (!track) return
+    let l = listenRef.current
+    if (!l || l.trackId !== track.id) { l = { trackId: track.id, id: null, heard: 0, last: t, started: false, sent30: false }; listenRef.current = l }
+    const delta = t - l.last
+    if (delta > 0 && delta < 1.5) l.heard += delta
+    l.last = t
+    if (!l.started && l.heard >= 3) {
+      l.started = true
+      const mine = l
+      void fetch(`/api/music/listens/${encodeURIComponent(track.id)}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seconds: Math.floor(mine.heard) }) })
+        .then((r) => r.json()).then((j) => { if (j?.id) mine.id = j.id }).catch(() => undefined)
+    }
+    if (l.id && !l.sent30 && l.heard >= 30) { l.sent30 = true; postListen(track.id, { id: l.id, seconds: Math.floor(l.heard) }) }
+  }
+
   const onTimeUpdate = () => {
     const audio = audioRef.current
     if (!audio || !currentRef.current) return
     setCurrentTime(audio.currentTime)
+    trackListen(audio.currentTime)
     if (Number.isFinite(audio.duration)) setDuration(audio.duration)
     if (audio.currentTime >= 30) recordCurrentPlay()
   }
 
   const onEnded = () => {
     if (!currentRef.current) return
+    flushListenRef.current(true)
     if ((audioRef.current?.currentTime ?? 0) >= 30) recordCurrentPlay()
     const next = pick(1)
     if (next) { playTrack(next, queue); return }

@@ -2,6 +2,7 @@ import { get } from "@vercel/blob";
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { getSessionHash } from "@/lib/music/session";
+import { canHearFull } from "@/lib/music/access";
 
 export const runtime = "nodejs";
 
@@ -12,17 +13,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ trac
   if (!track) return NextResponse.json({ error: "Track not found." }, { status: 404 });
 
   const sessionHash = await getSessionHash();
-  let owned = false;
-  if (sessionHash && !track.isFreeToStream) {
-    owned = Boolean(
-      await db.musicOrderItem.findFirst({
-        where: { trackId: track.id, order: { buyerSessionHash: sessionHash, status: "PAID" } },
-        select: { id: true },
-      }),
-    );
-  }
-  const released = !track.releaseAt || track.releaseAt.getTime() <= Date.now();
-  const path = released && (track.isFreeToStream || owned) ? track.mp3Path : track.previewPath;
+  const full = await canHearFull(track, sessionHash);
+  const path = full ? track.mp3Path : track.previewPath;
   if (!path) return NextResponse.json({ error: "Audio is not available." }, { status: 404 });
 
   try {

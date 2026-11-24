@@ -5,6 +5,9 @@ import { CheckoutForm, PlayTrackButton } from '@/components/music/checkout-form'
 import { CoverArtwork } from '@/components/music/site-shell'
 import { getSoundsPageData, getTrackBySlug } from '@/lib/music/data'
 import { formatNaira } from '@/lib/money'
+import { boughtTrackCount } from '@/lib/music/access'
+import { getSessionHash } from '@/lib/music/session'
+import { SUPERFAN_TRACKS } from '@/lib/artist-math'
 import { formatRelease, getSaleInfo } from '@/lib/music/sales'
 import { formatDuration } from '@/lib/music/format'
 
@@ -21,6 +24,8 @@ export default async function TrackPage({ params }: TrackPageProps) {
   const [track, catalog] = await Promise.all([getTrackBySlug(trackSlug), getSoundsPageData()])
   if (!track) notFound()
   const sale = await getSaleInfo(track.id)
+  const owned = track.isSuperfanOnly ? await boughtTrackCount(await getSessionHash(), track.artistId) : 0
+  const unlocked = track.isSuperfanOnly && owned >= SUPERFAN_TRACKS
   const queue = catalog.tracks.some((item) => item.id === track.id) ? catalog.tracks : [track, ...catalog.tracks]
 
   return (
@@ -33,13 +38,14 @@ export default async function TrackPage({ params }: TrackPageProps) {
           <h1 id="track-title">{track.title}</h1>
           <Link href={`/artists/${track.artistSlug}`} className="track-artist">{track.artistName}</Link>
           <div className="track-facts"><span className="track-fact">{formatDuration(track.durationSeconds)}</span><span className="track-fact">{track.isFreeToStream ? 'Free to stream' : '30-second preview'}</span></div>
-          {track.isFreeToStream && <p className="track-description">This artist has marked the full track free to stream.</p>}
-          <p className="track-price">{track.priceKobo === 0 ? 'Free' : sale?.payWhatYouWant ? `From ${formatNaira(track.priceKobo)}` : formatNaira(track.priceKobo)}</p>
+          {track.isFreeToStream && !track.isSuperfanOnly && <p className="track-description">This artist has marked the full track free to stream.</p>}
+          {track.isSuperfanOnly && <p className="track-description"><strong>Superfan exclusive.</strong> {unlocked ? 'You unlocked this track. Enjoy it.' : `Not for sale. Buy ${SUPERFAN_TRACKS} different tracks by ${track.artistName} to unlock it. You have ${owned} so far. Use the same browser you paid with.`}</p>}
+          <p className="track-price">{track.isSuperfanOnly ? 'Superfans only' : track.priceKobo === 0 ? 'Free' : sale?.payWhatYouWant ? `From ${formatNaira(track.priceKobo)}` : formatNaira(track.priceKobo)}</p>
           {sale && !sale.released && sale.releaseAt && <p className="track-description"><strong>Pre-order.</strong> Releases {formatRelease(sale.releaseAt)}. You can hear the 30-second preview now, and the full track unlocks automatically.</p>}
           {sale?.payWhatYouWant && <p className="track-description">Pay what you want. Minimum {formatNaira(track.priceKobo)}.</p>}
           {sale && sale.editionLeft !== null && <p className="track-description"><strong>Limited edition.</strong> {sale.editionLeft > 0 ? `${sale.editionLeft} of ${sale.editionLimit} copies left.` : `All ${sale.editionLimit} copies are sold.`}</p>}
           <div className="track-actions">
-            {track.canPlay && <PlayTrackButton track={track} queue={queue} label={track.isFreeToStream ? 'Play full track' : 'Play 30-second preview'} />}
+            {(track.canPlay || unlocked) && <PlayTrackButton track={{ ...track, canPlay: true }} queue={queue} label={unlocked || (track.isFreeToStream && !track.isSuperfanOnly) ? 'Play full track' : 'Play 30-second preview'} />}
             <Link className="button button-outline" href="/library">My Library</Link>
           </div>
           {track.priceKobo > 0 && <CheckoutForm trackId={track.id} title={track.title} priceKobo={track.priceKobo} payWhatYouWant={Boolean(sale?.payWhatYouWant)} suggestedKobo={sale?.suggestedKobo ?? null} soldOut={sale?.editionLeft === 0} preOrderLabel={sale && !sale.released ? 'preorder' : ''} />}

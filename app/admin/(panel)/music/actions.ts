@@ -73,6 +73,7 @@ export async function createTrack(fd: FormData) {
   const priceKobo = nairaToKobo(str(fd, "price") || "0");
   const duration = Math.round(Number(str(fd, "durationSeconds")));
   const isFree = fd.get("isFreeToStream") === "on";
+  const superfanOnly = fd.get("superfanOnly") === "on";
   const mp3Path = str(fd, "mp3Path");
   const previewPath = str(fd, "previewPath");
 
@@ -86,8 +87,8 @@ export async function createTrack(fd: FormData) {
   if (priceKobo === null) bail(back, "Enter a valid price in naira (0 for free).");
   if (!Number.isFinite(duration) || duration <= 0) bail(back, "The track length could not be read. Try the MP3 again.");
   if (!mp3Path) bail(back, "Upload the full MP3.");
-  if (!isFree && !previewPath) bail(back, "Upload a 30-second preview, or tick 'Free to stream'.");
-  if (!isFree && priceKobo === 0) bail(back, "Set a price above zero, or tick 'Free to stream'.");
+  if (!isFree && !superfanOnly && !previewPath) bail(back, "Upload a 30-second preview, or tick 'Free to stream'.");
+  if (!isFree && !superfanOnly && priceKobo === 0) bail(back, "Set a price above zero, or tick 'Free to stream'.");
 
   let slug = slugify(title) || "track";
   if (RESERVED.has(slug)) slug = `${slug}-track`;
@@ -100,7 +101,8 @@ export async function createTrack(fd: FormData) {
         mood: str(fd, "mood") || null,
         priceKobo,
         durationSeconds: duration,
-        isFreeToStream: isFree,
+        isFreeToStream: isFree && !superfanOnly,
+        isSuperfanOnly: superfanOnly,
         mp3Path,
         previewPath: previewPath || null,
         wavPath: str(fd, "wavPath") || null,
@@ -124,7 +126,7 @@ export async function togglePublish(fd: FormData) {
   await requireAdmin(MANAGERS);
   const t = await db.track.findUnique({ where: { id: str(fd, "id") } });
   if (!t) redirect("/admin/music");
-  if (!t.isPublished && !t.isFreeToStream && (!t.previewPath || t.priceKobo <= 0)) {
+  if (!t.isPublished && !t.isFreeToStream && !t.isSuperfanOnly && (!t.previewPath || t.priceKobo <= 0)) {
     bail("/admin/music", "A paid track needs a preview file and a price before it can go live.");
   }
   await db.track.update({

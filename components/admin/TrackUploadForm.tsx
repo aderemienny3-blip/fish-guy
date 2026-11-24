@@ -79,7 +79,7 @@ export default function TrackUploadForm({ artists, genres }: { artists: { id: st
     const wav = fd.get("wav") as File;
     const cover = fd.get("cover") as File;
     if (!mp3?.size) return setMsg("Choose the full MP3 first.");
-    if (fd.get("isFreeToStream") !== "on" && !preview?.size) return setMsg("Add a 30-second preview, or tick 'Free to stream'.");
+    if (fd.get("isFreeToStream") !== "on" && fd.get("superfanOnly") !== "on" && !preview?.size) return setMsg("Add a 30-second preview, or tick 'Free to stream'.");
 
     setBusy(true);
     try {
@@ -151,6 +151,7 @@ export default function TrackUploadForm({ artists, genres }: { artists: { id: st
       <div className="grid gap-4 md:grid-cols-2">
         <div><label className={label}>Price (naira)</label><input name="price" inputMode="decimal" defaultValue="0" className={input} /></div>
         <label className="flex items-end gap-2 pb-2 text-sm"><input type="checkbox" name="isFreeToStream" /> Free to stream (full track plays for everyone)</label>
+        <label className="flex items-start gap-2 pb-2 text-sm md:col-span-2"><input type="checkbox" name="superfanOnly" className="mt-1" /> Superfan exclusive: not for sale. Only fans who bought 3 different tracks by this artist can play it. No price or preview needed.</label>
       </div>
       <div>
         <label className={label}>Full MP3 (required). Best: 320 kbps</label>

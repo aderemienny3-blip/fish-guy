@@ -3,14 +3,18 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { getArtistEmail } from "@/lib/artist-auth";
 import { artistStats } from "@/lib/artist-stats";
+import { MAX_PER_WEEK, recipientsFor } from "@/lib/announce";
 import { share } from "@/lib/artist-math";
 import { formatNaira } from "@/lib/money";
 import { artistLogout } from "./actions";
+import { submitAnnouncement } from "./announce-actions";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Artist dashboard | Fish Guy Sounds", robots: { index: false } };
 
 const when = (d: Date | null) => (d ? new Intl.DateTimeFormat("en-NG", { timeZone: "Africa/Lagos", day: "numeric", month: "short", year: "numeric" }).format(d) : "");
+const mmss = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+const pctText = (v: number | null) => (v === null ? "Not enough data yet" : `${v}%`);
 
 function Bars({ data, label }: { data: { day: string; value: number }[]; label: string }) {
   const max = Math.max(1, ...data.map((d) => d.value));
@@ -39,10 +43,10 @@ function Places({ rows, total, empty }: { rows: { label: string; value: number }
   );
 }
 
-export default async function ArtistDashboard({ searchParams }: { searchParams: Promise<{ a?: string }> }) {
+export default async function ArtistDashboard({ searchParams }: { searchParams: Promise<{ a?: string; announced?: string; error?: string }> }) {
   const email = await getArtistEmail();
   if (!email) redirect("/artist/login");
-  const { a } = await searchParams;
+  const q = await searchParams;
   const artists = await db.artist.findMany({ where: { email }, orderBy: { name: "asc" }, select: { id: true, name: true, slug: true } });
 
   if (artists.length === 0) {
@@ -54,9 +58,17 @@ export default async function ArtistDashboard({ searchParams }: { searchParams: 
       </main>
     );
   }
-  const artist = artists.find((x) => x.id === a) ?? artists[0];
-  const s = await artistStats(artist.id);
+  const artist = artists.find((x) => x.id === q.a) ?? artists[0];
+  const [s, announcements, allFans, superfans] = await Promise.all([
+    artistStats(artist.id),
+    db.fanAnnouncement.findMany({ where: { artistId: artist.id }, orderBy: { createdAt: "desc" }, take: 8 }),
+    recipientsFor(artist.id, "ALL"),
+    recipientsFor(artist.id, "SUPERFANS"),
+  ]);
   const t = s.totals;
+  const e = s.engagement;
+  const weekUsed = announcements.filter((a) => a.createdAt.getTime() > Date.now() - 7 * 86_400_000).length;
+  const hasPending = announcements.some((a) => a.status === "PENDING");
 
   return (
     <main className="page-width utility-page artist-dash">
@@ -76,6 +88,21 @@ export default async function ArtistDashboard({ searchParams }: { searchParams: 
         <div><span>Listeners, last {s.windowDays} days</span><b>{t.listeners30.toLocaleString("en-NG")}</b><small>different people</small></div>
         <div><span>Sales, last {s.windowDays} days</span><b>{t.sales30}</b><small>{t.salesAllTime} all time</small></div>
         <div><span>Sales value, last {s.windowDays} days</span><b>{formatNaira(t.revenue30Kobo)}</b><small>{formatNaira(t.revenueAllTimeKobo)} all time, before fees and payout share</small></div>
+      </section>
+
+      <section className="ad-block">
+        <h2>How people listen</h2>
+        {e.starts === 0 ? (
+          <p className="ad-empty">Listening detail starts filling in now. It shows how long fans stay, whether they finish, and who comes back.</p>
+        ) : (
+          <div className="ad-cards">
+            <div><span>Stayed 30 seconds or more</span><b>{e.reachedPct === null ? "—" : `${e.reachedPct}%`}</b><small>{e.reachedPct === null ? "Needs 10 or more listens" : `of ${e.starts} listens`}</small></div>
+            <div><span>Finished the full track</span><b>{e.finishedPct === null ? "—" : `${e.finishedPct}%`}</b><small>{e.finishedPct === null ? "Needs 10 or more full listens" : `of ${e.fullListens} full listens`}</small></div>
+            <div><span>Came back on another day</span><b>{e.repeatPct === null ? "—" : `${e.repeatPct}%`}</b><small>{e.repeatPct === null ? "Needs 10 or more listeners" : `${e.repeatListeners} of ${e.listeners} listeners`}</small></div>
+            <div><span>Where people usually stop</span><b>{e.typicalDropoffSeconds === null ? "—" : mmss(e.typicalDropoffSeconds)}</b><small>{e.typicalDropoffSeconds === null ? "Needs more full listens" : "for those who leave before the end"}</small></div>
+          </div>
+        )}
+        <p className="ad-note">Measured from how long the player really played, over the last {s.windowDays} days. A play on the Plays chart counts after 30 seconds.</p>
       </section>
 
       <section className="ad-block">
@@ -102,10 +129,67 @@ export default async function ArtistDashboard({ searchParams }: { searchParams: 
         <h2>Your tracks</h2>
         {s.perTrack.length === 0 ? <p className="ad-empty">No tracks uploaded yet.</p> : (
           <div className="ad-table" role="table" aria-label="Tracks">
-            <div role="row" className="ad-row ad-hd"><span>Track</span><span>Plays (30d)</span><span>Sales</span><span>Value</span></div>
+            <div role="row" className="ad-row ad-hd ad-tracks"><span>Track</span><span>Plays (30d)</span><span>Stayed 30s</span><span>Finished</span><span>Sales</span><span>Value</span></div>
             {s.perTrack.map((r) => (
-              <div role="row" className="ad-row" key={r.id}>
-                <span>{r.title}{!r.live && <em> (draft)</em>}</span><span>{r.plays30}</span><span>{r.sales}</span><span>{formatNaira(r.revenueKobo)}</span>
+              <div role="row" className="ad-row ad-tracks" key={r.id}>
+                <span>{r.title}{!r.live && <em> (draft)</em>}{r.exclusive && <em> (superfan exclusive)</em>}</span>
+                <span>{r.plays30}</span><span>{r.reachedPct === null ? "—" : `${r.reachedPct}%`}</span><span>{r.finishedPct === null ? "—" : `${r.finishedPct}%`}</span>
+                <span>{r.sales}</span><span>{formatNaira(r.revenueKobo)}</span>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      <section className="ad-block">
+        <h2>Your fans</h2>
+        {s.fans.length === 0 ? <p className="ad-empty">Fans appear here when someone buys a track. Anyone who buys 3 or more different tracks is a Superfan, and unlocks your superfan exclusives.</p> : (
+          <>
+            <p className="ad-fansum">
+              <b>{s.fans.filter((f) => f.tier === "Superfan").length}</b> Superfans · <b>{s.fans.filter((f) => f.tier === "Repeat buyer").length}</b> repeat buyers · <b>{s.fans.filter((f) => f.tier === "New fan").length}</b> new fans
+            </p>
+            <div className="ad-table" role="table" aria-label="Fans ranked by spend">
+              <div role="row" className="ad-row ad-hd ad-fans"><span>Fan</span><span>Level</span><span>Tracks</span><span>Spent</span><span>Last bought</span></div>
+              {s.fans.slice(0, 50).map((f, i) => (
+                <div role="row" className="ad-row ad-fans" key={i}>
+                  <span>{f.name}<small className="ad-mail">{f.email ? <a href={`mailto:${f.email}`}>{f.email}</a> : "Email kept private"} · {f.place}</small></span>
+                  <span><i className={`ad-tier ${f.tier === "Superfan" ? "gold" : ""}`}>{f.tier}</i></span>
+                  <span>{f.tracks}</span><span>{formatNaira(f.spentKobo)}</span><span>{when(f.lastAt)}</span>
+                </div>
+              ))}
+            </div>
+            <p><a className="button button-outline" href={`/api/artist/fans?a=${artist.id}`}>Download fans with emails (CSV)</a></p>
+          </>
+        )}
+        <p className="ad-note">Ranked by money spent. Emails are shown only for buyers who did not choose to keep them private. Please use them only to thank fans and share your music, and never sell or pass them on.</p>
+      </section>
+
+      <section className="ad-block" id="message-fans">
+        <h2>Message your fans</h2>
+        {q.announced === "1" && <p className="form-message" role="status">Sent for review. Fish Guy approves it before it goes out, usually within a day.</p>}
+        {q.error && <p className="form-message is-error" role="alert">{q.error}</p>}
+        <p className="ad-note">{allFans.length} fans can be emailed, and {superfans.length} of them are Superfans. Fans who kept their email private, or unsubscribed, are never included. Every email has an unsubscribe link. You can send {MAX_PER_WEEK} a week.</p>
+        {allFans.length > 0 && !hasPending && weekUsed < MAX_PER_WEEK && (
+          <form action={submitAnnouncement} className="account-card">
+            <input type="hidden" name="artistId" value={artist.id} />
+            <label>Who gets it
+              <select name="audience" defaultValue="ALL">
+                <option value="ALL">All fans who can be emailed ({allFans.length})</option>
+                <option value="SUPERFANS">Superfans only ({superfans.length})</option>
+              </select>
+            </label>
+            <label>Subject<input name="subject" maxLength={100} required /></label>
+            <label>Message<textarea name="body" rows={6} minLength={20} maxLength={1500} required /></label>
+            <label>Link (optional, must start with https://)<input name="linkUrl" maxLength={300} placeholder="https://" /></label>
+            <button className="button button-gold" type="submit">Send for review</button>
+          </form>
+        )}
+        {hasPending && <p className="ad-note">You have an announcement waiting for review.</p>}
+        {announcements.length > 0 && (
+          <div className="ad-table" role="table" aria-label="Your announcements">
+            {announcements.map((a) => (
+              <div role="row" className="ad-row" key={a.id}>
+                <span>{a.subject}</span><span>{a.status.toLowerCase()}</span><span>{a.status === "SENT" ? `${a.recipientCount} sent` : a.reviewNote ?? ""}</span><span>{when(a.sentAt ?? a.createdAt)}</span>
               </div>
             ))}
           </div>
@@ -119,13 +203,13 @@ export default async function ArtistDashboard({ searchParams }: { searchParams: 
             <div role="row" className="ad-row ad-hd ad-buyers"><span>Buyer</span><span>Track</span><span>From</span><span>Date</span><span>Paid</span></div>
             {s.recentSales.map((r, i) => (
               <div role="row" className="ad-row ad-buyers" key={i}>
-                <span>{r.buyer}{r.email && <small className="ad-mail"><a href={`mailto:${r.email}`}>{r.email}</a></small>}</span>
-                <span>{r.track}</span><span>{r.place}</span><span>{when(r.when)}</span><span>{formatNaira(r.amountKobo)}</span>
+                <span>{r.buyer}</span>
+                <span>{r.track}{r.editionNo ? ` (No. ${r.editionNo})` : ""}</span><span>{r.place}</span><span>{when(r.when)}</span><span>{formatNaira(r.amountKobo)}</span>
               </div>
             ))}
           </div>
         )}
-        <p className="ad-note">Buyers are shown by first name and approximate location only. A buyer&apos;s email appears here only if they ticked the box allowing you to contact them.</p>
+        <p className="ad-note">Buyers are shown by first name and approximate location only. Emails are in the fans list above, for buyers who did not keep theirs private.</p>
       </section>
     </main>
   );

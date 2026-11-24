@@ -23,6 +23,10 @@ export default async function SaleSettings({ params, searchParams }: { params: P
       {error && <Banner>{error}</Banner>}
       <form action={saveSale} className={`${card} max-w-2xl space-y-5 p-6`}>
         <input type="hidden" name="id" value={t.id} />
+        <div className="space-y-2 rounded-lg border border-[#D4AF37]/40 p-4">
+          <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="superfanOnly" defaultChecked={t.isSuperfanOnly} className="h-4 w-4 accent-[#D4AF37]" /> Superfan exclusive: not for sale</label>
+          <p className="text-xs text-[#9A9585]">Only fans who have bought 3 different tracks by this artist can play the full track. Everything below about price is ignored while this is ticked.</p>
+        </div>
         <div>
           <label className={label}>Price in naira (the minimum, if fans can pay what they want)</label>
           <input name="price" defaultValue={t.priceKobo / 100} inputMode="decimal" className={input} />

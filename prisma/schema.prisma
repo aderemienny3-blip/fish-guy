@@ -264,6 +264,7 @@ model Artist {
   isFeatured Boolean  @default(false)
   createdAt  DateTime @default(now())
   tracks     Track[]
+  announcements FanAnnouncement[]
 }
 
 model Track {
@@ -296,6 +297,9 @@ model Track {
   suggestedKobo   Int?
   releaseAt       DateTime?
   editionLimit    Int?
+
+  isSuperfanOnly  Boolean          @default(false)
+  listenEvents    ListenEvent[]
 
   @@index([isPublished, releasedAt])
   @@index([artistId])
@@ -412,6 +416,54 @@ model TakedownReport {
   track         Track?    @relation(fields: [trackId], references: [id], onDelete: SetNull)
 
   @@index([status, createdAt])
+}
+
+// ---- LISTEN TRACKING AND FAN ANNOUNCEMENTS ----
+
+model ListenEvent {
+  id           String   @id @default(cuid())
+  trackId      String
+  listenerHash String
+  day          String
+  startedAt    DateTime @default(now())
+  maxSeconds   Int      @default(0)
+  completed    Boolean  @default(false)
+  isFull       Boolean  @default(false)
+  country      String?
+  region       String?
+  city         String?
+  track        Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+
+  @@index([trackId, startedAt])
+  @@index([listenerHash, trackId, day])
+}
+
+model FanAnnouncement {
+  id             String    @id @default(cuid())
+  artistId       String
+  audience       String    @default("ALL") // ALL or SUPERFANS
+  subject        String
+  body           String
+  linkUrl        String?
+  status         String    @default("PENDING") // PENDING, SENDING, SENT, REJECTED
+  recipientCount Int       @default(0)
+  reviewNote     String?
+  createdAt      DateTime  @default(now())
+  reviewedAt     DateTime?
+  sentAt         DateTime?
+  artist         Artist    @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@index([artistId, createdAt])
+  @@index([status])
+}
+
+model FanUnsubscribe {
+  id        String   @id @default(cuid())
+  email     String
+  artistId  String
+  createdAt DateTime @default(now())
+
+  @@unique([email, artistId])
 }
 
 // ---- FISH GUY STUDENT DISCOUNT ----

@@ -36,7 +36,7 @@ export function TrackCard({ track, queue, showPlays = false }: { track: MusicTra
         <div className="track-card-bottom">
           <span>{track.genre}</span>
           {showPlays && <span>{track.playCount.toLocaleString()} plays</span>}
-          <strong>{track.priceKobo === 0 ? 'Free' : formatNaira(track.priceKobo)}</strong>
+          <strong>{track.isSuperfanOnly ? 'Superfans' : track.priceKobo === 0 ? 'Free' : formatNaira(track.priceKobo)}</strong>
         </div>
       </div>
     </article>
