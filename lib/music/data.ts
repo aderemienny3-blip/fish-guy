@@ -1,4 +1,5 @@
 import { db } from "@/lib/db";
+import { copyrightLine } from "@/lib/copyright";
 
 export type MusicTrack = {
   id: string;
@@ -15,6 +16,7 @@ export type MusicTrack = {
   artistSlug: string;
   artistImageUrl: string | null;
   playCount: number;
+  copyrightLine: string;
 };
 
 export type MusicArtist = {
@@ -57,6 +59,7 @@ function toView(t: Row, playCount = 0): MusicTrack {
     artistSlug: t.artist.slug,
     artistImageUrl: t.artist.imageUrl,
     playCount,
+    copyrightLine: copyrightLine({ owner: t.copyrightOwner, year: t.copyrightYear, fallbackOwner: t.artist.name, fallbackYear: (t.releasedAt ?? t.createdAt).getFullYear() }),
   };
 }
 

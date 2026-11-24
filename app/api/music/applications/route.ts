@@ -24,6 +24,9 @@ export async function POST(request: Request) {
   ) {
     return NextResponse.json({ error: "Enter an artist name, contact name, valid email, and music links." }, { status: 400 });
   }
-  await db.artistApplication.create({ data: { artistName, contactName, email, links, message: message || null } });
+  if (str(body.rights) !== "on") {
+    return NextResponse.json({ error: "Please confirm you own this music and agree to the Artist terms." }, { status: 400 });
+  }
+  await db.artistApplication.create({ data: { artistName, contactName, email, links, message: message || null, rightsAcceptedAt: new Date() } });
   return NextResponse.json({ submitted: true }, { status: 201 });
 }

@@ -286,6 +286,11 @@ model Track {
   artist          Artist           @relation(fields: [artistId], references: [id], onDelete: Restrict)
   plays           MusicPlay[]
   orderItems      MusicOrderItem[]
+  rightsConfirmedAt DateTime?
+  rightsConfirmedBy String?
+  copyrightOwner    String?
+  copyrightYear     Int?
+  takedownReports   TakedownReport[]
 
   @@index([isPublished, releasedAt])
   @@index([artistId])
@@ -363,6 +368,7 @@ model ArtistApplication {
   message     String?
   status      ApplicationStatus @default(PENDING)
   reviewedAt  DateTime?
+  rightsAcceptedAt DateTime?
   createdAt   DateTime          @default(now())
 }
 
@@ -379,6 +385,27 @@ model ArtistCode {
   createdAt DateTime  @default(now())
 
   @@index([email, createdAt])
+}
+
+// ---- COPYRIGHT REPORTS ----
+
+model TakedownReport {
+  id            String    @id @default(cuid())
+  trackId       String?
+  trackRef      String
+  reporterName  String
+  reporterEmail String
+  ownership     String
+  description   String
+  proofUrl      String?
+  signature     String
+  status        String    @default("OPEN") // OPEN, ACTIONED, DISMISSED
+  adminNote     String?
+  handledAt     DateTime?
+  createdAt     DateTime  @default(now())
+  track         Track?    @relation(fields: [trackId], references: [id], onDelete: SetNull)
+
+  @@index([status, createdAt])
 }
 
 // ---- FISH GUY STUDENT DISCOUNT ----

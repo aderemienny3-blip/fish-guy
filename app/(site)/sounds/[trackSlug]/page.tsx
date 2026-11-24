@@ -39,6 +39,8 @@ export default async function TrackPage({ params }: TrackPageProps) {
           </div>
           {track.priceKobo > 0 && <CheckoutForm trackId={track.id} title={track.title} priceKobo={track.priceKobo} />}
           {!track.canPlay && <p className="library-note">Audio for this release is not available yet.</p>}
+          <p className="library-note">{track.copyrightLine}</p>
+          <p className="library-note"><Link href={`/report-track?track=${track.slug}`}>Report this track</Link></p>
         </div>
       </section>
     </main>

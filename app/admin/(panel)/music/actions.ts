@@ -65,7 +65,7 @@ export async function saveArtist(fd: FormData) {
 }
 
 export async function createTrack(fd: FormData) {
-  await requireAdmin(MANAGERS);
+  const admin = await requireAdmin(MANAGERS);
   const back = "/admin/music/tracks/new";
   const artistId = str(fd, "artistId");
   const title = str(fd, "title");
@@ -78,6 +78,10 @@ export async function createTrack(fd: FormData) {
 
   if (!(await db.artist.findUnique({ where: { id: artistId } }))) bail(back, "Choose an artist.");
   if (title.length < 1) bail(back, "Enter the track title.");
+  if (fd.get("rightsConfirmed") !== "on") bail(back, "Confirm the artist owns or has licensed this music before saving.");
+  const yearRaw = Math.round(Number(str(fd, "copyrightYear")));
+  const copyrightYear = yearRaw >= 1900 && yearRaw <= new Date().getFullYear() + 1 ? yearRaw : new Date().getFullYear();
+  const copyrightOwner = str(fd, "copyrightOwner").slice(0, 120) || null;
   if (!GENRES.includes(genre)) bail(back, "Choose a genre.");
   if (priceKobo === null) bail(back, "Enter a valid price in naira (0 for free).");
   if (!Number.isFinite(duration) || duration <= 0) bail(back, "The track length could not be read. Try the MP3 again.");
@@ -101,6 +105,10 @@ export async function createTrack(fd: FormData) {
         previewPath: previewPath || null,
         wavPath: str(fd, "wavPath") || null,
         coverPath: str(fd, "coverPath") || null,
+        rightsConfirmedAt: new Date(),
+        rightsConfirmedBy: admin.email,
+        copyrightOwner,
+        copyrightYear,
         slug: `${slug}-${Math.random().toString(36).slice(2, 6)}`,
         isPublished: false,
       },

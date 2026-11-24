@@ -36,6 +36,7 @@ export function ArtistApplicationForm() {
       <div className="form-field"><label htmlFor="artist-email">Email address</label><input id="artist-email" name="email" type="email" autoComplete="email" required maxLength={254} /></div>
       <div className="form-field"><label htmlFor="artist-links">Links to your music</label><textarea id="artist-links" name="links" placeholder="Paste your public listening or social links" required maxLength={1500} /></div>
       <div className="form-field"><label htmlFor="artist-message">A note about your sound <span>(optional)</span></label><textarea id="artist-message" name="message" maxLength={1200} /></div>
+      <label className="checkout-optin"><input type="checkbox" name="rights" required /> I own this music, or have the right to license it, and any samples are cleared. I have read and agree to the <a href="/artist-terms" target="_blank" rel="noreferrer">Artist terms</a>.</label>
       <button className="button button-gold" type="submit" disabled={isPending}>{isPending ? 'Sending…' : 'Submit application'}</button>
       <p className={`form-message ${message && !isPending && message.includes('could not') ? 'is-error' : ''}`} aria-live="polite">{message}</p>
     </form>

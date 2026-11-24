@@ -170,6 +170,11 @@ export default function TrackUploadForm({ artists, genres }: { artists: { id: st
           {warn.map((w) => <li key={w}>{w.replace(/^(full|preview): /, "")}</li>)}
         </ul>
       )}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div><label className={label}>Copyright owner (blank = the artist)</label><input name="copyrightOwner" className={input} maxLength={120} /></div>
+        <div><label className={label}>Copyright year</label><input name="copyrightYear" inputMode="numeric" defaultValue={new Date().getFullYear()} className={input} /></div>
+      </div>
+      <label className="flex items-start gap-2 text-sm"><input type="checkbox" name="rightsConfirmed" required className="mt-1" /> The artist has accepted the Artist terms and confirmed they own, or have licensed, all of this music, including any samples.</label>
       <button type="submit" disabled={busy} className={btn}>{busy ? "Working…" : "Save as draft"}</button>
       {msg && <p className="text-sm text-[#9A9585]" aria-live="polite">{msg}</p>}
     </form>

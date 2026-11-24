@@ -35,7 +35,7 @@ export default async function Applications({
                 <div>
                   <p className="text-lg font-medium">{a.artistName}</p>
                   <p className="text-xs text-[#9A9585]">
-                    {a.contactName} · {a.email} · {fmtDateTime(a.createdAt)} · {a.status.toLowerCase()}
+                    {a.contactName} · {a.email} · {fmtDateTime(a.createdAt)} · {a.status.toLowerCase()} · {a.rightsAcceptedAt ? "rights confirmed " + fmtDateTime(a.rightsAcceptedAt) : "rights not recorded"}
                   </p>
                 </div>
                 {a.status === "PENDING" && (
