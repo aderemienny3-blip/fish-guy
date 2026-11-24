@@ -83,6 +83,8 @@ export async function getSoundsPageData(genre?: string) {
     newReleases: tracks.slice(0, 8),
     trending: tracks.filter((t) => t.playCount > 0).sort((a, b) => b.playCount - a.playCount).slice(0, 8),
     hasPublishedTracks: all.length > 0,
+    allTracks: all,
+    latest: all.find((t) => t.canPlay) ?? null,
   };
 }
 

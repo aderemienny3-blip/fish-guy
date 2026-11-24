@@ -3,6 +3,10 @@ import { ArtistSpotlight } from '@/components/music/artist-spotlight'
 import { GenreChips } from '@/components/music/genre-chips'
 import { NoTracksEmptyState } from '@/components/music/empty-state'
 import { TrackCard } from '@/components/music/track-card'
+import { HeroRelease } from '@/components/music/hero-release'
+import { TopTen } from '@/components/music/top-ten'
+import { getTopTen, hasLibrary } from '@/lib/music/chart'
+import { getSessionHash } from '@/lib/music/session'
 import { GENRES, getSoundsPageData } from '@/lib/music/data'
 
 export const dynamic = 'force-dynamic'
@@ -13,6 +17,8 @@ export default async function SoundsPage({ searchParams }: SoundsPageProps) {
   const { genre } = await searchParams
   const selectedGenre = GENRES.find((item) => item.toLowerCase() === genre?.toLowerCase())
   const data = await getSoundsPageData(selectedGenre)
+  const chart = await getTopTen(data.allTracks)
+  const returning = await hasLibrary(await getSessionHash())
 
   return (
     <main className="page-width sounds-main">
@@ -24,15 +30,13 @@ export default async function SoundsPage({ searchParams }: SoundsPageProps) {
           <div className="hero-actions">
             <a href="#new-releases" className="button button-gold">Explore the releases <span aria-hidden="true">↓</span></a>
             <Link href="/playlists" className="button button-outline">Playlists</Link>
-            <Link href="/library" className="button button-outline">Open my library</Link>
-            <Link href="/shop" className="button button-outline">Shop frozen food</Link>
+          </div>
+          <div className="hero-quiet-links">
+            {returning && <Link href="/library">Open my library</Link>}
+            <Link href="/shop">Shop frozen food</Link>
           </div>
         </div>
-        <div className="hero-card" aria-label="Fish Guy Sounds, independent Lagos hip-hop">
-          <div className="hero-card-top"><span>FISH GUY SOUNDS</span><span>NG · 01</span></div>
-          <div className="waveform" aria-hidden="true">{Array.from({ length: 17 }, (_, index) => <span key={index} />)}</div>
-          <div className="hero-card-bottom"><div><strong>Independent by nature.</strong><span>Music moves better when it moves direct.</span></div><span className="hero-card-tag">Lagos, Nigeria</span></div>
-        </div>
+        <HeroRelease track={data.latest} queue={data.allTracks} />
       </section>
 
       <ArtistSpotlight artist={data.featuredArtist} />
@@ -53,6 +57,18 @@ export default async function SoundsPage({ searchParams }: SoundsPageProps) {
           <NoTracksEmptyState title={`No ${selectedGenre} tracks yet.`} />
         ) : (
           <NoTracksEmptyState />
+        )}
+      </section>
+
+      <section className="section-block" id="fish-guy-top-10" aria-labelledby="top-ten-title">
+        <div className="section-heading">
+          <div><p className="eyebrow">THE CHART</p><h2 id="top-ten-title">Fish Guy Top 10</h2></div>
+          <span className="text-link">Last 30 days · plays and sales</span>
+        </div>
+        {chart.length > 0 ? (
+          <TopTen rows={chart} />
+        ) : (
+          <div className="quiet-empty"><span className="quiet-empty-line" /><p>The chart starts the moment listeners press play or buy. Be the first.</p></div>
         )}
       </section>
 

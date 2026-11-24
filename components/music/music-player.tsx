@@ -5,6 +5,7 @@ import { Pause, Play, Repeat, Shuffle, SkipBack, SkipForward, Volume2, VolumeX }
 import type { MusicTrack } from '@/lib/music/data'
 import { formatDuration } from '@/lib/music/format'
 import { CoverArtwork } from '@/components/music/site-shell'
+import { NowPlaying } from '@/components/music/now-playing'
 
 type MusicPlayerContextValue = {
   currentTrack: MusicTrack | null
@@ -396,15 +397,16 @@ export function useMusicPlayer() {
 /** The player bar is always on screen, so there is always a Play button. */
 export function MiniPlayer() {
   const { currentTrack, isPlaying, isShuffle, isStarting, notice, currentTime, duration, volume, isMuted, isBuffering, isPreview, repeatOne, toggleRepeat, togglePlayback, startQueue, playNext, playPrevious, toggleShuffle, toggleMute, setVolume, seek } = useMusicPlayer()
+  const [fullOpen, setFullOpen] = useState(false)
   const maxDuration = duration || currentTrack?.durationSeconds || 0
   const onPlay = () => { if (currentTrack) togglePlayback(); else void startQueue() }
 
   return (
-    <aside className="mini-player" aria-label="Music player">
+    <aside className={`mini-player ${currentTrack ? '' : 'is-idle'}`} aria-label="Music player">
       <div className="player-track">
         {currentTrack ? (
           <>
-            <CoverArtwork src={currentTrack.coverImageUrl} alt={`${currentTrack.title} cover art`} className="player-cover" />
+            <button type="button" className="player-expand" aria-label="Open full player" onClick={() => setFullOpen(true)}><CoverArtwork src={currentTrack.coverImageUrl} alt={`${currentTrack.title} cover art`} className="player-cover" /></button>
             <div className="player-track-copy"><strong>{currentTrack.title}</strong><span>{currentTrack.artistName}{isBuffering ? ' · Buffering…' : ''}</span>{isPreview && <a className="player-preview" href={`/sounds/${currentTrack.slug}`}>30-second preview · Get the full track</a>}</div>
           </>
         ) : (
@@ -436,6 +438,10 @@ export function MiniPlayer() {
         </button>
         <input aria-label="Volume" type="range" min="0" max="1" step="0.01" value={isMuted ? 0 : volume} onChange={(event) => setVolume(Number(event.target.value))} />
       </div>
+      {fullOpen && currentTrack && (
+        <NowPlaying track={currentTrack} isPlaying={isPlaying} isPreview={isPreview} currentTime={currentTime} duration={duration}
+          onToggle={togglePlayback} onNext={playNext} onPrevious={playPrevious} onSeek={seek} onClose={() => setFullOpen(false)} />
+      )}
     </aside>
   )
 }

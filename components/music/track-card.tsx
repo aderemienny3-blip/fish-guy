@@ -12,11 +12,12 @@ export function TrackCard({ track, queue, showPlays = false }: { track: MusicTra
   const active = currentTrack?.id === track.id
 
   return (
-    <article className="track-card">
+    <article className={`track-card ${active ? 'is-active' : ''}`}>
       <div className="track-card-art-wrap">
         <Link href={`/sounds/${track.slug}`} aria-label={`View ${track.title} by ${track.artistName}`}>
           <CoverArtwork src={track.coverImageUrl} alt={`${track.title} cover art`} className="track-card-art" />
         </Link>
+        {active && isPlaying && <span className="card-eq" aria-hidden="true"><i /><i /><i /></span>}
         <button
           type="button"
           className="cover-play"
