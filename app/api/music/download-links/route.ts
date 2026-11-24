@@ -21,6 +21,10 @@ export async function POST(request: Request) {
     where: { id: orderItemId, order: { buyerSessionHash: sessionHash, status: "PAID" } },
     include: { track: true },
   });
+  if (item?.track.releaseAt && item.track.releaseAt.getTime() > Date.now()) {
+    const when = new Intl.DateTimeFormat("en-NG", { timeZone: "Africa/Lagos", weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }).format(item.track.releaseAt);
+    return NextResponse.json({ error: `This release unlocks on ${when}. Your purchase is saved.` }, { status: 403 });
+  }
   const path = format === "wav" ? item?.track.wavPath : item?.track.mp3Path;
   if (!item || !path) return NextResponse.json({ error: "That format is not available for this purchase." }, { status: 404 });
 

@@ -1,8 +1,8 @@
-Copyright protection
-1. Expand-Archive -Force "$env:USERPROFILE\Downloads\fish-guy-copyright.zip" -DestinationPath .
-2. node scripts/patch-copyright.mjs        (must end "All done.")
-3. npx prisma migrate dev --name copyright
+Pricing and releases: pay what you want, release dates and pre-orders, limited editions
+Needs the artist-dashboard and copyright zips installed first.
+1. Expand-Archive -Force "$env:USERPROFILE\Downloads\fish-guy-sales.zip" -DestinationPath .
+2. node scripts/patch-sales.mjs            (must end "All done.")
+3. npx prisma migrate dev --name sales
 4. Remove-Item -Recurse -Force .next ; npm run build
-5. git add . ; git commit -m "Copyright protection" ; git push
-Then: have a Nigerian entertainment lawyer review /artist-terms.
-Report emails use ADMIN_ALERT_EMAIL (comma-separated) and RESEND_API_KEY.
+5. git add . ; git commit -m "Pay what you want, pre-orders, limited editions" ; git push
+Then: Admin > Music > a track > "Sale settings".

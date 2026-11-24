@@ -80,7 +80,7 @@ export default async function MusicAdmin({
                   </td>
                   <td className={td}>{t._count.plays}</td>
                   <td className={td}>{t._count.orderItems}</td>
-                  <td className={td}>{t.isPublished ? "Live" : "Draft"}</td>
+                  <td className={td}>{t.isPublished ? "Live" : "Draft"}{t.releaseAt && t.releaseAt > new Date() ? " · pre-order" : ""}{t.editionLimit ? ` · edition of ${t.editionLimit}` : ""}{t.payWhatYouWant ? " · pay what you want" : ""}<br /><Link href={`/admin/music/tracks/${t.id}/sale`} className="text-xs text-[#D4AF37] underline">Sale settings</Link></td>
                   <td className={`${td} text-right`}>
                     <form action={togglePublish}>
                       <input type="hidden" name="id" value={t.id} />

@@ -21,7 +21,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ trac
       }),
     );
   }
-  const path = track.isFreeToStream || owned ? track.mp3Path : track.previewPath;
+  const released = !track.releaseAt || track.releaseAt.getTime() <= Date.now();
+  const path = released && (track.isFreeToStream || owned) ? track.mp3Path : track.previewPath;
   if (!path) return NextResponse.json({ error: "Audio is not available." }, { status: 404 });
 
   try {

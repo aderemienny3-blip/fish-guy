@@ -5,6 +5,7 @@ import { Prisma } from "@prisma/client";
 import { db } from "@/lib/db";
 import { initPaystack, isPaystackCheckoutUrl } from "@/lib/paystack";
 import { geoFrom } from "@/lib/geo";
+import { SaleError, chooseAmount, reserveEdition } from "@/lib/music/sales";
 import { MUSIC_SESSION_COOKIE, createSessionToken, hashToken, sessionCookie } from "@/lib/music/session";
 
 export const runtime = "nodejs";
@@ -31,39 +32,49 @@ export async function POST(request: Request) {
   }
 
   // Price always comes from the database, never from the browser.
+  // For pay-what-you-want tracks the fan's amount is only accepted if it is at or above the minimum.
   const track = await db.track.findFirst({ where: { id: trackId, isPublished: true } });
   if (!track || track.priceKobo <= 0) {
     return NextResponse.json({ error: "This release is not available for purchase." }, { status: 404 });
   }
+  const amount = chooseAmount(track, body?.amountKobo);
+  if (!amount.ok) return NextResponse.json({ error: amount.error }, { status: 400 });
+  const chargeKobo = amount.kobo;
+  let saleError = "";
 
   const existingToken = (await cookies()).get(MUSIC_SESSION_COOKIE)?.value;
   const token = existingToken || createSessionToken();
   const sessionHash = hashToken(token);
 
-  let order = await db.musicOrder
-    .create({
+  let order = await db
+    .$transaction(async (tx) => {
+      await reserveEdition(tx, track); // locks the track and stops a limited edition being oversold
+      return tx.musicOrder.create({
       data: {
         buyerSessionHash: sessionHash,
         buyerEmail,
         buyerName,
         reference: `FGS-${randomUUID().replaceAll("-", "").toUpperCase()}`,
-        amountKobo: track.priceKobo,
+        amountKobo: chargeKobo,
         idempotencyKey,
         ...geoFrom(request.headers),
         shareWithArtist: body?.shareWithArtist === true,
-        items: { create: { trackId: track.id, unitPriceKobo: track.priceKobo } },
+        items: { create: { trackId: track.id, unitPriceKobo: chargeKobo } },
       },
       include: { items: true },
+      });
     })
     .catch((e) => {
+      if (e instanceof SaleError) { saleError = e.message; return null; }
       if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002") return null;
       throw e;
     });
 
+  if (saleError) return NextResponse.json({ error: saleError }, { status: 409 });
   if (!order) {
     const existing = await db.musicOrder.findUnique({ where: { idempotencyKey }, include: { items: true } });
     if (!existing || existing.buyerSessionHash !== sessionHash || existing.items[0]?.trackId !== track.id ||
-        existing.buyerEmail !== buyerEmail || existing.buyerName !== buyerName) {
+        existing.buyerEmail !== buyerEmail || existing.buyerName !== buyerName || existing.amountKobo !== chargeKobo) {
       return NextResponse.json({ error: "This checkout request cannot be reused." }, { status: 409 });
     }
     if (existing.status === "PAID") {

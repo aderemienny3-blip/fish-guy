@@ -292,6 +292,11 @@ model Track {
   copyrightYear     Int?
   takedownReports   TakedownReport[]
 
+  payWhatYouWant  Boolean          @default(false)
+  suggestedKobo   Int?
+  releaseAt       DateTime?
+  editionLimit    Int?
+
   @@index([isPublished, releasedAt])
   @@index([artistId])
   playlistTracks  PlaylistTrack[]
@@ -343,6 +348,7 @@ model MusicOrderItem {
   createdAt     DateTime            @default(now())
   order         MusicOrder          @relation(fields: [orderId], references: [id], onDelete: Cascade)
   track         Track               @relation(fields: [trackId], references: [id], onDelete: Restrict)
+  editionNo     Int?
   downloadLinks MusicDownloadLink[]
 
   @@index([orderId])

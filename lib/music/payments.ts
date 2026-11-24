@@ -1,5 +1,6 @@
 import { db } from "@/lib/db";
 import { fetchPaystackAsTxn } from "@/lib/paystack";
+import { assignEditionNumbers } from "@/lib/music/sales";
 
 export const MUSIC_REF = /^FGS-[A-F0-9]{32}$/;
 
@@ -11,7 +12,10 @@ export const MUSIC_REF = /^FGS-[A-F0-9]{32}$/;
 export async function confirmMusicOrder(reference: string): Promise<boolean> {
   const order = await db.musicOrder.findUnique({ where: { reference } });
   if (!order) return false;
-  if (order.status === "PAID") return true;
+  if (order.status === "PAID") {
+    await assignEditionNumbers(order.id).catch((e) => console.error("edition numbering failed (again)", e));
+    return true;
+  }
   if (!order.providerRef) return false;
 
   const txn = await fetchPaystackAsTxn(order.reference);
@@ -24,7 +28,11 @@ export async function confirmMusicOrder(reference: string): Promise<boolean> {
     data: { status: "PAID", paidAt: new Date() },
   });
   const fresh = await db.musicOrder.findUnique({ where: { id: order.id }, select: { status: true } });
-  return fresh?.status === "PAID";
+  if (fresh?.status === "PAID") {
+    await assignEditionNumbers(order.id).catch((e) => console.error("edition numbering failed", e));
+    return true;
+  }
+  return false;
 }
 
 export async function confirmMusicOrderForSession(reference: string, sessionHash: string) {
