@@ -265,6 +265,9 @@ model Artist {
   createdAt  DateTime @default(now())
   tracks     Track[]
   announcements FanAnnouncement[]
+  labelId    String?
+  verifiedAt DateTime?
+  label      Label?   @relation(fields: [labelId], references: [id], onDelete: SetNull)
 }
 
 model Track {
@@ -389,6 +392,52 @@ model ArtistApplication {
 
 
 // ---- ARTIST DASHBOARD LOGIN ----
+
+enum LabelStatus {
+  UNVERIFIED
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Label {
+  id              String         @id @default(cuid())
+  name            String
+  ownerEmail      String         @unique
+  status          LabelStatus    @default(UNVERIFIED)
+  emailVerifiedAt DateTime?
+  approvedAt      DateTime?
+  paidUntil       DateTime?
+  rejectNote      String?
+  createdAt       DateTime       @default(now())
+  members         LabelMember[]
+  artists         Artist[]
+  payments        LabelPayment[]
+}
+
+model LabelMember {
+  id        String   @id @default(cuid())
+  labelId   String
+  email     String   @unique
+  role      String   @default("MANAGER")
+  createdAt DateTime @default(now())
+  label     Label    @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@index([labelId])
+}
+
+model LabelPayment {
+  id          String    @id @default(cuid())
+  labelId     String
+  reference   String    @unique
+  amountKobo  Int
+  status      String    @default("PENDING")
+  createdAt   DateTime  @default(now())
+  paidAt      DateTime?
+  label       Label     @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@index([labelId])
+}
 
 model ArtistCode {
   id        String    @id @default(cuid())

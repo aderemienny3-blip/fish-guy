@@ -1,0 +1,9 @@
+.verified-badge{display:inline-block;width:1.05em;height:1.05em;margin-left:.3em;vertical-align:-.16em;flex:none}
+.label-note{padding:14px 16px;border:1px solid rgba(212,175,55,.45);background:rgba(212,175,55,.08);color:#e8dfbf;font-size:14px;line-height:1.6;margin:14px 0}
+.label-note b{color:#d4af37}
+.label-price{font-family:Georgia,serif;font-size:34px;color:#d4af37;margin:6px 0}
+.label-list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.label-list li{display:flex;justify-content:space-between;gap:12px;align-items:center;padding:10px 14px;border:1px solid #22211d;background:#141414;font-size:14px}
+.label-list small{color:#9a9585}
+.label-list form{margin:0}
+.label-check{display:flex!important;grid-template-columns:none!important;gap:10px;align-items:flex-start;font-size:13px}

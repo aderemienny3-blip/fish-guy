@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { VerifiedBadge } from '@/components/music/verified-badge'
 import { notFound } from 'next/navigation'
 import { NoTracksEmptyState } from '@/components/music/empty-state'
 import { TrackCard } from '@/components/music/track-card'
@@ -22,7 +23,7 @@ export default async function ArtistPage({ params }: { params: Promise<{ artistS
         {cover && <Image src={cover} alt="" fill priority sizes="100vw" unoptimized aria-hidden="true" />}
         <div className="artist-hero-content">
           {artist.isFeatured && <p className="eyebrow">ARTIST OF THE WEEK</p>}
-          <h1 id="artist-title">{artist.name}</h1>
+          <h1 id="artist-title">{artist.name}{artist.verifiedAt && <VerifiedBadge />}</h1>
           <p className="artist-meta">{tracks.length} {tracks.length === 1 ? 'track' : 'tracks'}</p>
         </div>
       </section>

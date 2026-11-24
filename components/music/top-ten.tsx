@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Pause, Play } from 'lucide-react'
 import { useMusicPlayer } from '@/components/music/music-player'
 import { CoverArtwork } from '@/components/music/site-shell'
+import { VerifiedBadge } from '@/components/music/verified-badge'
 import type { MusicTrack } from '@/lib/music/data'
 
 export type ChartRow = { rank: number; track: MusicTrack; plays: number; sales: number }
@@ -22,7 +23,7 @@ export function TopTen({ rows }: { rows: ChartRow[] }) {
             <CoverArtwork src={track.coverImageUrl} alt="" className="top-ten-cover" />
             <div className="top-ten-copy">
               <Link href={`/sounds/${track.slug}`}>{track.title}</Link>
-              <Link href={`/artists/${track.artistSlug}`}>{track.artistName}</Link>
+              <Link href={`/artists/${track.artistSlug}`}>{track.artistName}{track.artistVerified && <VerifiedBadge />}</Link>
             </div>
             <span className="top-ten-stats">{plays.toLocaleString()} plays{sales > 0 ? ` · ${sales} sold` : ''}</span>
             <button type="button" className="top-ten-play" disabled={!track.canPlay}

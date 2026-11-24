@@ -6,6 +6,7 @@ import { useMusicPlayer } from '@/components/music/music-player'
 import type { MusicTrack } from '@/lib/music/data'
 import { formatNaira } from '@/lib/money'
 import { CoverArtwork } from '@/components/music/site-shell'
+import { VerifiedBadge } from '@/components/music/verified-badge'
 
 export function TrackCard({ track, queue, showPlays = false }: { track: MusicTrack; queue: MusicTrack[]; showPlays?: boolean }) {
   const { currentTrack, isPlaying, playTrack, togglePlayback } = useMusicPlayer()
@@ -33,7 +34,7 @@ export function TrackCard({ track, queue, showPlays = false }: { track: MusicTra
           <Link href={`/sounds/${track.slug}`} className="track-title">{track.title}</Link>
           {track.isFreeToStream && <span className="free-tag">FREE STREAM</span>}
         </div>
-        <Link href={`/artists/${track.artistSlug}`} className="track-artist">{track.artistName}</Link>
+        <Link href={`/artists/${track.artistSlug}`} className="track-artist">{track.artistName}{track.artistVerified && <VerifiedBadge />}</Link>
         <div className="track-card-bottom">
           <span>{track.genre}</span>
           {showPlays && <span>{track.playCount.toLocaleString()} plays</span>}

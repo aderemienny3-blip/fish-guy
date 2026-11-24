@@ -2,17 +2,17 @@
 
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { getArtistEmail } from "@/lib/artist-auth";
+import { getArtistAccess } from "@/lib/artist-access";
 import { MAX_PER_WEEK, MAX_RECIPIENTS, recipientsFor } from "@/lib/announce";
 
 const s = (fd: FormData, k: string) => String(fd.get(k) ?? "").trim();
 
 export async function submitAnnouncement(fd: FormData) {
-  const email = await getArtistEmail();
-  if (!email) redirect("/artist/login");
+  const access = await getArtistAccess();
+  if (!access) redirect("/artist/login");
   const artistId = s(fd, "artistId");
   const back = (q: string) => redirect(`/artist?a=${encodeURIComponent(artistId)}&${q}#message-fans`);
-  const artist = await db.artist.findFirst({ where: { id: artistId, email }, select: { id: true } });
+  const artist = access.artists.find((a) => a.id === artistId);
   if (!artist) redirect("/artist");
 
   const audience = s(fd, "audience") === "SUPERFANS" ? "SUPERFANS" : "ALL";

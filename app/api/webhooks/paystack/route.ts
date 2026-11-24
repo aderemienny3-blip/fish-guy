@@ -4,6 +4,8 @@ import { settleOrder } from "@/lib/payments";
 import { AD_PAY_REF } from "@/lib/ads/labels";
 import { confirmAdPayment } from "@/lib/ads/payments";
 import { MUSIC_REF, confirmMusicOrder } from "@/lib/music/payments";
+import { LABEL_PAY_REF } from "@/lib/label-rules";
+import { confirmLabelPayment } from "@/lib/label-payments";
 
 // ONE webhook URL for the whole business. Set it in Paystack dashboard > Settings > API Keys & Webhooks.
 // Frozen-food references start with FG-, music with FGS-, artist ads with FGA-.
@@ -25,6 +27,8 @@ export async function POST(req: Request) {
     try {
       if (ref.startsWith("FGA-")) {
         if (AD_PAY_REF.test(ref)) await confirmAdPayment(ref);
+      } else if (ref.startsWith("FGL-")) {
+        if (LABEL_PAY_REF.test(ref)) await confirmLabelPayment(ref);
       } else if (ref.startsWith("FGS-")) {
         if (MUSIC_REF.test(ref)) await confirmMusicOrder(ref);
       } else if (/^FG-[A-F0-9]{16}$/.test(ref)) {

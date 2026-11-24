@@ -19,6 +19,7 @@ export type MusicTrack = {
   copyrightLine: string;
   isSuperfanOnly: boolean;
   artistId: string;
+  artistVerified: boolean;
 };
 
 export type MusicArtist = {
@@ -29,6 +30,7 @@ export type MusicArtist = {
   imageUrl: string | null;
   bannerUrl: string | null;
   isFeatured: boolean;
+  verifiedAt: Date | null;
 };
 
 export const GENRES = ["Hip-hop", "Street rap", "Drill", "Trap", "Boom bap"];
@@ -64,6 +66,7 @@ function toView(t: Row, playCount = 0): MusicTrack {
     copyrightLine: copyrightLine({ owner: t.copyrightOwner, year: t.copyrightYear, fallbackOwner: t.artist.name, fallbackYear: (t.releasedAt ?? t.createdAt).getFullYear() }),
     isSuperfanOnly: t.isSuperfanOnly,
     artistId: t.artistId,
+    artistVerified: Boolean(t.artist.verifiedAt),
   };
 }
 

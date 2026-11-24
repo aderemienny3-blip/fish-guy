@@ -1,14 +1,13 @@
-Fish Guy batch 4: split sheets, earnings ledger, payouts, plus the labels line in the Artist terms.
-Install the labels zip first.
+Fish Guy: label accounts, one email per artist, verified tag. Install the meta zip first.
 
-Expand-Archive -Force "$env:USERPROFILE\Downloads\fish-guy-payouts.zip" -DestinationPath .
-node scripts/patch-payouts.mjs
-npx prisma migrate dev --name payouts
+Expand-Archive -Force "$env:USERPROFILE\Downloads\fish-guy-labels.zip" -DestinationPath .
+node scripts/patch-labels.mjs
+npx prisma migrate dev --name labels
 Remove-Item -Recurse -Force .next
 npm run build
 git add .
-git commit -m "Split sheets, earnings and payouts"
+git commit -m "Label accounts and verified artists"
 git push
 
 If the migration asks to reset the database, answer No. Send me any SKIP line.
-Then in admin open "Payouts and splits" and set the artist share. Nothing is recorded until you do.
+Needs ADMIN_ALERT_EMAIL, RESEND_API_KEY and PAYSTACK_SECRET_KEY set on Vercel (already used by earlier kits).

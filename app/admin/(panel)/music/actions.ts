@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
 import { MANAGERS, requireAdmin } from "@/lib/admin/auth";
 import { normalizeIsrc } from "@/lib/music/isrc";
+import { emailInUse } from "@/lib/label-data";
 import { bail, isUniqueError, nairaToKobo, slugify, str } from "@/lib/admin/format";
 import { GENRES } from "@/lib/music/data";
 
@@ -21,6 +22,7 @@ export async function approveApplication(fd: FormData) {
   const id = str(fd, "id");
   const app = await db.artistApplication.findUnique({ where: { id } });
   if (!app || app.status !== "PENDING") bail("/admin/music/applications", "That application was already handled.");
+  if (app.email && (await emailInUse(app.email))) bail("/admin/music/applications", "That email is already used by another artist or label team.");
   const slug = await uniqueArtistSlug(app.artistName);
   await db.$transaction([
     db.artist.create({ data: { slug, name: app.artistName, email: app.email, bio: app.message } }),
@@ -55,6 +57,10 @@ export async function saveArtist(fd: FormData) {
     bannerUrl: bannerUrl || null,
     isFeatured: fd.get("isFeatured") === "on",
   };
+  if (data.email) {
+    const current = id ? (await db.artist.findUnique({ where: { id }, select: { email: true } }))?.email : null;
+    if (data.email !== current && (await emailInUse(data.email, id || undefined))) bail(back, "That email is already used by another artist or label team. Each artist needs their own email.");
+  }
   if (id) await db.artist.update({ where: { id }, data });
   else await db.artist.create({ data: { ...data, slug: await uniqueArtistSlug(name) } });
   // Only one artist is "Artist of the week" at a time.

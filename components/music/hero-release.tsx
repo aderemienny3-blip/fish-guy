@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Pause, Play } from 'lucide-react'
 import { useMusicPlayer } from '@/components/music/music-player'
 import { CoverArtwork } from '@/components/music/site-shell'
+import { VerifiedBadge } from '@/components/music/verified-badge'
 import type { MusicTrack } from '@/lib/music/data'
 import { formatNaira } from '@/lib/money'
 
@@ -37,7 +38,7 @@ export function HeroRelease({ track, queue }: { track: MusicTrack | null; queue:
         </Link>
         <div className="hero-release-copy">
           <Link href={`/sounds/${track.slug}`} className="hero-release-title">{track.title}</Link>
-          <Link href={`/artists/${track.artistSlug}`} className="hero-release-artist">{track.artistName}</Link>
+          <Link href={`/artists/${track.artistSlug}`} className="hero-release-artist">{track.artistName}{track.artistVerified && <VerifiedBadge />}</Link>
           <div className="hero-release-actions">
             <button type="button" className="hero-release-play" disabled={!track.canPlay}
               onClick={() => (active ? togglePlayback() : playTrack(track, queue))}>

@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { endLabelSession } from "@/lib/label-auth";
 import { cleanEmail, endArtistSession, requestArtistCode, verifyArtistCode } from "@/lib/artist-auth";
 
 const enc = encodeURIComponent;
@@ -21,5 +22,6 @@ export async function checkArtistCode(fd: FormData) {
 
 export async function artistLogout() {
   await endArtistSession();
+  await endLabelSession();
   redirect("/artist/login");
 }

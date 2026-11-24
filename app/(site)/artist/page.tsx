@@ -1,7 +1,8 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { db } from "@/lib/db";
-import { getArtistEmail } from "@/lib/artist-auth";
+import { getArtistAccess } from "@/lib/artist-access";
+import { getLabelAccess } from "@/lib/label-auth";
 import { artistStats } from "@/lib/artist-stats";
 import { MAX_PER_WEEK, recipientsFor } from "@/lib/announce";
 import { share } from "@/lib/artist-math";
@@ -45,10 +46,10 @@ function Places({ rows, total, empty }: { rows: { label: string; value: number }
 }
 
 export default async function ArtistDashboard({ searchParams }: { searchParams: Promise<{ a?: string; announced?: string; error?: string }> }) {
-  const email = await getArtistEmail();
-  if (!email) redirect("/artist/login");
+  const access = await getArtistAccess();
+  if (!access) redirect((await getLabelAccess()) ? "/label" : "/artist/login");
+  const { email, artists } = access;
   const q = await searchParams;
-  const artists = await db.artist.findMany({ where: { email }, orderBy: { name: "asc" }, select: { id: true, name: true, slug: true } });
 
   if (artists.length === 0) {
     return (

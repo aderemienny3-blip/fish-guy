@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { VerifiedBadge } from '@/components/music/verified-badge'
 import { notFound } from 'next/navigation'
 import { CheckoutForm, PlayTrackButton } from '@/components/music/checkout-form'
 import { CoverArtwork } from '@/components/music/site-shell'
@@ -36,7 +37,7 @@ export default async function TrackPage({ params }: TrackPageProps) {
         <div className="track-info">
           <p className="eyebrow">{track.genre}{track.mood ? ` · ${track.mood}` : ''}</p>
           <h1 id="track-title">{track.title}</h1>
-          <Link href={`/artists/${track.artistSlug}`} className="track-artist">{track.artistName}</Link>
+          <Link href={`/artists/${track.artistSlug}`} className="track-artist">{track.artistName}{track.artistVerified && <VerifiedBadge />}</Link>
           <div className="track-facts"><span className="track-fact">{formatDuration(track.durationSeconds)}</span><span className="track-fact">{track.isFreeToStream ? 'Free to stream' : '30-second preview'}</span></div>
           {track.isFreeToStream && !track.isSuperfanOnly && <p className="track-description">This artist has marked the full track free to stream.</p>}
           {track.isSuperfanOnly && <p className="track-description"><strong>Superfan exclusive.</strong> {unlocked ? 'You unlocked this track. Enjoy it.' : `Not for sale. Buy ${SUPERFAN_TRACKS} different tracks by ${track.artistName} to unlock it. You have ${owned} so far. Use the same browser you paid with.`}</p>}
