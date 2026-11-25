@@ -1,12 +1,12 @@
-Fish Guy: lock screen and notification controls. No database change.
+Fish Guy: music player fix for phones, plus lock screen controls. No database change.
 
-Expand-Archive -Force "$env:USERPROFILE\Downloads\fish-guy-lockscreen.zip" -DestinationPath .
-node scripts/patch-lockscreen.mjs
+Expand-Archive -Force "$env:USERPROFILE\Downloads\fish-guy-mobile-player.zip" -DestinationPath .
+node scripts/patch-mobile-player.mjs
 
-Check it says "All done." with no SKIP, then:
+Check for "All done." and no SKIP, then:
 
 Remove-Item -Recurse -Force .next
 npm run build
 git add .
-git commit -m "Lock screen controls"
+git commit -m "Mobile player fix and lock screen controls"
 git push
