@@ -5,6 +5,7 @@ import { getStudentRules } from "@/lib/student";
 import { getActivePromo } from "@/lib/festive";
 import { BUSINESS } from "@/lib/business";
 import { MAX_DAYS_AHEAD, addDays, lagosNow } from "@/lib/delivery";
+import { getCheckoutPrefill } from "@/lib/checkout-prefill";
 
 export const dynamic = "force-dynamic";
 export const metadata = { title: "Checkout | Fish Guy" };
@@ -19,6 +20,7 @@ export default async function CheckoutPage() {
   const zones = allZones.filter((z) => !z.isPickup);
   const pickupZone = allZones.find((z) => z.isPickup) ?? null;
   const today = lagosNow().date;
+  const prefill = await getCheckoutPrefill();
 
   return (
     <main className="page-width utility-page">
@@ -39,6 +41,7 @@ export default async function CheckoutPage() {
           pickup={pickupZone ? { id: pickupZone.id, address: BUSINESS.address } : null}
           promo={promo}
           today={today}
+          prefill={prefill}
           lastDay={addDays(today, MAX_DAYS_AHEAD)}
         />
       )}

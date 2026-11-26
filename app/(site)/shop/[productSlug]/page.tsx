@@ -8,6 +8,8 @@ import { getProductBySlug } from "@/lib/shop/data";
 import { getAddOns } from "@/lib/shop/addons";
 import { AddOnShelf } from "@/components/shop/addon-shelf";
 import { naira } from "@/lib/shop/format";
+import { JsonLd } from "@/components/seo/json-ld";
+import { productJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -16,7 +18,7 @@ type Props = { params: Promise<{ productSlug: string }> };
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { productSlug } = await params;
   const p = await getProductBySlug(productSlug);
-  return p ? { title: `${p.name} | Fish Guy`, description: `${p.name}, ${naira(p.priceKobo)} per ${p.unit}. Frozen food delivery in Lagos.` } : { title: "Product not found | Fish Guy" };
+  return p ? { title: `${p.name} | Fish Guy`, description: `${p.name}, ${naira(p.priceKobo)} per ${p.unit}. Frozen food delivery in Lagos.`, alternates: { canonical: `/shop/${p.slug}` }, openGraph: { title: p.name, images: p.imageUrl ? [p.imageUrl] : undefined } } : { title: "Product not found | Fish Guy" };
 }
 
 export default async function ProductPage({ params }: Props) {
@@ -28,6 +30,7 @@ export default async function ProductPage({ params }: Props) {
 
   return (
     <main className="page-width product-page">
+      <JsonLd data={productJsonLd(p)} />
       <nav className="breadcrumb" aria-label="Breadcrumb">
         <Link href="/shop">Shop</Link>
         {p.category && p.categorySlug && (<><span aria-hidden="true">/</span><Link href={`/shop?category=${p.categorySlug}`}>{p.category}</Link></>)}

@@ -1,4 +1,5 @@
 import { formatNaira } from "@/lib/money";
+import { sendOrderUpdateWhatsApp } from "@/lib/whatsapp";
 
 /**
  * Email through Resend's HTTP API. Never throws: a failed email must never break an order.
@@ -95,6 +96,7 @@ ${site() ? `<p style="margin:22px 0 0"><a href="${site()}/admin/orders/${o.refer
   await Promise.all([
     sendEmail(o.contactEmail, `Fish Guy order ${o.reference} confirmed`, customer),
     sendEmail(adminList(), `New order ${o.reference}: ${formatNaira(o.totalKobo)}`, admin),
+    sendOrderUpdateWhatsApp(o.contactPhone, o.contactName.split(" ")[0], o.reference, "PAID").catch(() => false),
   ]);
 }
 
@@ -113,11 +115,12 @@ const STATUS_COPY: Record<string, [string, string]> = {
   DELIVERED: ["Delivered. Enjoy!", "Your order has been delivered. Thank you for choosing Fish Guy."],
 };
 
-export async function notifyOrderStatus(o: { reference: string; contactName: string; contactEmail: string }, status: string) {
+export async function notifyOrderStatus(o: { reference: string; contactName: string; contactEmail: string; contactPhone?: string }, status: string) {
   const c = STATUS_COPY[status];
   if (!c) return;
+  const wa = o.contactPhone ? sendOrderUpdateWhatsApp(o.contactPhone, o.contactName.split(" ")[0], o.reference, status).catch(() => false) : Promise.resolve(false);
   const link = site() ? `<p style="margin:20px 0 0"><a href="${site()}/order/${o.reference}" style="color:#D4AF37">View order ${o.reference}</a></p>` : "";
-  await sendEmail(o.contactEmail, `${c[0]} · ${o.reference}`, shell(c[0], `<p>Hi ${esc(o.contactName.split(" ")[0])}, ${c[1]}</p>${link}`));
+  await Promise.all([wa, sendEmail(o.contactEmail, `${c[0]} · ${o.reference}`, shell(c[0], `<p>Hi ${esc(o.contactName.split(" ")[0])}, ${c[1]}</p>${link}`))]);
 }
 
 export async function notifyStudentDecision(

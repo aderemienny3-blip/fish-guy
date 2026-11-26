@@ -1,4 +1,5 @@
 import { formatNaira } from "@/lib/money";
+import { normalizeNgPhone } from "@/lib/phone";
 
 // WhatsApp Business Cloud API (Meta). Used for (1) instant new-order alerts to you, and (2) login codes for customers.
 // Needs WHATSAPP_TOKEN and WHATSAPP_PHONE_ID on Vercel. Never throws: a failed message must never break an order.
@@ -51,6 +52,23 @@ export async function sendWhatsAppOtp(phone: string, code: string): Promise<bool
   const withButton = process.env.WHATSAPP_OTP_BUTTON !== "false"; // Meta's authentication templates include a copy-code button
   const r = await sendTemplate(phone.replace(/\D/g, ""), template, [code], withButton ? code : undefined);
   return r.ok;
+}
+
+const ORDER_LINE: Record<string, string> = {
+  PAID: "Payment received. We are getting your order ready.",
+  PREPARING: "We are packing your order now.",
+  OUT_FOR_DELIVERY: "Your order is on its way. Please keep your phone close.",
+  DELIVERED: "Delivered. Enjoy, and thank you for choosing Fish Guy.",
+};
+
+/** One status line to the customer. Template body: "Hi {{1}}, your Fish Guy order {{2}}: {{3}}". */
+export async function sendOrderUpdateWhatsApp(phone: string, firstName: string, reference: string, status: string): Promise<boolean> {
+  if (!whatsappConfigured()) return false;
+  const line = ORDER_LINE[status];
+  const to = normalizeNgPhone(phone);
+  if (!line || !to) return false;
+  const template = process.env.WHATSAPP_ORDER_TEMPLATE || "fish_guy_order_update";
+  return (await sendTemplate(to, template, [firstName || "there", reference, line])).ok;
 }
 
 const day = (iso: string) => new Intl.DateTimeFormat("en-NG", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" }).format(new Date(iso + "T00:00:00Z"));

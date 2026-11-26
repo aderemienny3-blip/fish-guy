@@ -35,6 +35,7 @@ model Customer {
   phone     String?  @unique // normalised: 234XXXXXXXXXX
   createdAt DateTime @default(now())
   orders    Order[]
+  regulars  RegularItem[]
 }
 
 model Product {
@@ -54,6 +55,7 @@ model Product {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   items       OrderItem[]
+  regulars    RegularItem[]
 
   @@index([active, category])
 }
@@ -245,6 +247,7 @@ enum MusicOrderStatus {
   PENDING
   PAID
   FAILED
+  REFUNDED
 }
 
 enum ApplicationStatus {
@@ -342,6 +345,8 @@ model MusicOrder {
   region           String?
   city             String?
   shareWithArtist  Boolean          @default(false)
+  refundedAt       DateTime?
+  refundNote       String?
   items            MusicOrderItem[]
 
   @@index([buyerSessionHash, status])
@@ -392,6 +397,18 @@ model ArtistApplication {
 
 
 // ---- ARTIST DASHBOARD LOGIN ----
+
+model RegularItem {
+  id         String   @id @default(cuid())
+  customerId String
+  productId  String
+  quantity   Int
+  updatedAt  DateTime @updatedAt
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([customerId, productId])
+}
 
 enum LabelStatus {
   UNVERIFIED

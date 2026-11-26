@@ -5,6 +5,8 @@ import { getShopPlaylistTracks } from "@/lib/music/playlists";
 import { liveCampaigns } from "@/lib/ads/data";
 import { getHero } from "@/lib/site-hero";
 import { getStudentRules } from "@/lib/student";
+import { JsonLd } from "@/components/seo/json-ld";
+import { localBusinessJsonLd } from "@/lib/seo";
 
 export const dynamic = "force-dynamic";
 
@@ -15,5 +17,5 @@ export default async function HomePage() {
   const [shop, sounds, student] = await Promise.all([getShopData(), getSoundsPageData(), getStudentRules()]);
   const curated = await getShopPlaylistTracks();
   const freeTracks = curated.length ? curated.slice(0, 6) : sounds.tracks.filter((t) => t.isFreeToStream && t.canPlay).slice(0, 3);
-  return <StorefrontHome hero={hero} heroAd={heroAd} sponsored={sponsored} products={shop.products} categories={shop.categories} freeTracks={freeTracks} studentPercent={student.percent} />;
+  return <><JsonLd data={localBusinessJsonLd()} /><StorefrontHome hero={hero} heroAd={heroAd} sponsored={sponsored} products={shop.products} categories={shop.categories} freeTracks={freeTracks} studentPercent={student.percent} /></>;
 }

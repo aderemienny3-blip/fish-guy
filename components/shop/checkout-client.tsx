@@ -7,6 +7,7 @@ import { naira } from "@/lib/shop/format";
 import { useCart } from "@/components/shop/cart";
 import { discountFor } from "@/lib/student-math";
 import { MAX_QTY, cartonsOf, evaluatePromo, resolveDiscounts, type PromoRules } from "@/lib/festive-math";
+import { clearSaved, loadSaved, saveDetails, type Prefill } from "@/lib/checkout-saved";
 
 const STUDENT_KEY = "fish-guy-student-v1";
 
@@ -18,10 +19,10 @@ type Pickup = { id: string; address: string };
 const dayLabel = (iso: string) =>
   new Intl.DateTimeFormat("en-NG", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" }).format(new Date(iso + "T00:00:00Z"));
 
-export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, promo }: { zones: Zone[]; slots: Slot[]; today: string; lastDay: string; student: { percent: number; maxKobo: number | null }; pickup: Pickup | null; promo: PromoRules | null }) {
+export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, promo, prefill }: { prefill?: Prefill | null; zones: Zone[]; slots: Slot[]; today: string; lastDay: string; student: { percent: number; maxKobo: number | null }; pickup: Pickup | null; promo: PromoRules | null }) {
   const { lines, ready, remove, setQty } = useCart();
   const [live, setLive] = useState<Map<string, Live> | null>(null);
-  const [zoneId, setZoneId] = useState(zones[0]?.id ?? "");
+  const [zoneId, setZoneId] = useState(zones.some((z) => z.id === prefill?.zoneId) ? prefill!.zoneId : zones[0]?.id ?? "");
   const [date, setDate] = useState("");
   const [slotId, setSlotId] = useState("");
   const [error, setError] = useState("");
@@ -29,6 +30,18 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
   const [studentRef, setStudentRef] = useState<string | null>(null);
   const [mode, setMode] = useState<"delivery" | "pickup">(zones.length === 0 && pickup ? "pickup" : "delivery");
   const isPickup = mode === "pickup" && !!pickup;
+  const [pre, setPre] = useState<Prefill | null>(prefill ?? null);
+  const [fromDevice, setFromDevice] = useState(false);
+
+  // Signed-in customers get their details from the server. Guests get what this device saved last time.
+  useEffect(() => {
+    if (prefill) return;
+    const s = loadSaved();
+    if (!s) return;
+    setPre(s);
+    setFromDevice(true);
+    if (zones.some((z) => z.id === s.zoneId)) setZoneId(s.zoneId);
+  }, [prefill, zones]);
 
   // A saved student code is only used if the server confirms it is still active.
   useEffect(() => {
@@ -132,6 +145,12 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
       });
       const json = await res.json().catch(() => ({}));
       if (!res.ok || typeof json.checkoutUrl !== "string") throw new Error(json.error ?? "Could not start payment. Please try again.");
+      saveDetails({
+        name: String(f.get("name") ?? ""), phone: String(f.get("phone") ?? ""), email: String(f.get("email") ?? ""),
+        addressLine: isPickup ? pre?.addressLine ?? "" : String(f.get("addressLine") ?? ""),
+        landmark: isPickup ? pre?.landmark ?? "" : String(f.get("landmark") ?? ""),
+        zoneId,
+      });
       window.location.assign(json.checkoutUrl);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not start payment. Please try again.");
@@ -141,12 +160,12 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
 
   return (
     <div className="checkout-layout">
-      <form className="checkout-shell" onSubmit={onSubmit}>
+      <form key={pre ? "saved" : "blank"} className="checkout-shell" onSubmit={onSubmit}>
         <fieldset>
           <legend>Contact</legend>
-          <label>Full name<input name="name" autoComplete="name" required minLength={2} /></label>
-          <label>Phone number<input name="phone" type="tel" autoComplete="tel" placeholder="080..." required /></label>
-          <label className="span-2">Email for your receipt<input name="email" type="email" autoComplete="email" required /></label>
+          <label>Full name<input name="name" autoComplete="name" required minLength={2} defaultValue={pre?.name ?? ""} /></label>
+          <label>Phone number<input name="phone" type="tel" autoComplete="tel" placeholder="080..." required defaultValue={pre?.phone ?? ""} /></label>
+          <label className="span-2">Email for your receipt<input name="email" type="email" autoComplete="email" required defaultValue={pre?.email ?? ""} /></label>
         </fieldset>
         <fieldset>
           <legend>{pickup ? "Delivery or pickup" : "Delivery"}</legend>
@@ -164,8 +183,8 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
             </div>
           ) : (
             <>
-              <label className="span-2">Delivery address<input name="addressLine" autoComplete="street-address" required minLength={5} /></label>
-              <label>Nearest landmark (optional)<input name="landmark" /></label>
+              <label className="span-2">Delivery address<input name="addressLine" autoComplete="street-address" required minLength={5} defaultValue={pre?.addressLine ?? ""} /></label>
+              <label>Nearest landmark (optional)<input name="landmark" defaultValue={pre?.landmark ?? ""} /></label>
               <label>
                 Area (local government)
                 <select value={zoneId} onChange={(e) => setZoneId(e.target.value)}>
@@ -194,6 +213,12 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
           <label className="span-2">{isPickup ? "Note for the store (optional)" : "Note for the rider (optional)"}<input name="notes" maxLength={300} /></label>
           <p className="field-note span-2">{isPickup ? "Slots need at least 2 hours to pack your order." : "We deliver across Lagos (except Ikorodu) and selected Ogun campus areas. Slots need at least 2 hours to pack your order."}</p>
         </fieldset>
+        {pre && (
+          <p className="field-note">
+            Filled in from your last order{fromDevice ? " on this device" : ""}. Check it is still right.{" "}
+            {fromDevice && <button type="button" className="student-remove" onClick={() => { clearSaved(); setPre(null); setFromDevice(false); }}>Clear saved details</button>}
+          </p>
+        )}
         {days.length === 0 && <p className="form-message is-error" role="alert">No {isPickup ? "pickup" : "delivery"} slots are open right now. Please check back soon.</p>}
         {error && <p className="form-message is-error" role="alert">{error}</p>}
         {belowMin && <p className="form-message is-error" role="alert">Delivery to {zone?.name} needs a minimum order of {naira(minOrder)}. Add {naira(minOrder - subtotalKobo)} more to continue.</p>}
@@ -201,6 +226,7 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
           {busy ? "Starting payment…" : `Pay ${naira(total)} securely`}
         </button>
         {studentRef && <p className="field-note">Student discount applies only if the phone number above is the one you verified with.</p>}
+        <p className="field-note">We send order updates by email and WhatsApp.</p>
         <p className="field-note">You will be taken to Paystack to pay by card, bank transfer or USSD.</p>
       </form>
 

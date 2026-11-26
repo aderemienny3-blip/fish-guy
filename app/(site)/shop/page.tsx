@@ -4,7 +4,11 @@ import { ShopEmptyState } from "@/components/shop/shop-empty-state";
 import { getShopData } from "@/lib/shop/data";
 
 export const dynamic = "force-dynamic";
-export const metadata = { title: "Shop frozen food | Fish Guy" };
+export const metadata = {
+  title: "Buy frozen fish, turkey and chicken in Lagos | Fish Guy",
+  description: "Order frozen fish, turkey and chicken online and get cold delivery across Lagos. Pay securely with Paystack.",
+  alternates: { canonical: "/shop" },
+};
 
 export default async function ShopPage({ searchParams }: { searchParams: Promise<{ category?: string }> }) {
   const { category } = await searchParams;

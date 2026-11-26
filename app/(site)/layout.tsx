@@ -22,11 +22,16 @@ import "./protect.css";
 import "./polish.css";
 import "./label.css";
 import "./mobile-player.css";
+import "./growth.css";
+import { siteUrl } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Fish Guy | Frozen Food Delivery in Lagos",
   description: "Frozen fish, turkey and chicken delivered across Lagos. Listen to independent music from Fish Guy Sounds while you shop.",
   applicationName: "Fish Guy",
+  metadataBase: new URL(siteUrl()),
+  keywords: ["frozen fish Lagos", "frozen food delivery Lagos", "buy frozen fish online Lagos", "frozen chicken and turkey Lagos", "frozen food for restaurants Lagos", "Fish Guy"],
+  openGraph: { siteName: "Fish Guy", type: "website", locale: "en_NG", title: "Fish Guy | Frozen Food Delivery in Lagos", description: "Frozen fish, turkey and chicken delivered across Lagos.", images: ["/icons/icon-512.png"] },
   icons: { icon: "/icons/icon-192.png", apple: "/icons/apple-touch-icon.png" },
   appleWebApp: { capable: true, title: "Fish Guy", statusBarStyle: "black-translucent" },
 };

@@ -1,0 +1,15 @@
+/* Business order form */
+.biz-list{list-style:none;margin:0 0 8px;padding:0;display:grid;gap:8px}
+.biz-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 12px;border:1px solid rgba(212,175,55,.18);border-radius:10px;background:#111}
+.biz-row.is-on{border-color:#D4AF37}
+.biz-name{display:grid;gap:2px;min-width:0}
+.biz-name strong{font-size:15px;color:#F5F1E6;overflow-wrap:anywhere}
+.biz-name small{color:#9A9585}
+.biz-qty{display:flex;align-items:center;gap:6px;flex:none}
+.biz-qty button{width:40px;height:40px;border-radius:8px;border:1px solid rgba(245,241,230,.25);background:#0A0A0A;color:#F5F1E6;font-size:20px;cursor:pointer}
+.biz-qty input{width:56px;height:40px;text-align:center;border-radius:8px;border:1px solid rgba(245,241,230,.25);background:#0A0A0A;color:#F5F1E6;font-size:16px}
+.biz-bar{position:sticky;bottom:12px;margin-top:18px;padding:14px;border:1px solid #D4AF37;border-radius:12px;background:#0A0A0A;display:grid;gap:10px;z-index:5}
+.biz-bar>div:first-child{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.biz-bar span{color:#D4AF37}
+.biz-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
