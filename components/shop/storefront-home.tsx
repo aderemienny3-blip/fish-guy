@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowRight, Beef, Clock3, CookingPot, Drumstick, Fish, MapPin, Package, Shell } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { ReactNode } from "react";
 import type { MusicTrack } from "@/lib/music/data";
 import type { ShopProduct } from "@/lib/shop/data";
 import { FreeStreamStrip } from "@/components/shop/free-stream-strip";
@@ -35,6 +36,7 @@ export function StorefrontHome({
   hero = DEFAULT_HERO,
   heroAd = null,
   studentPercent = 0,
+  bundles = null,
 }: {
   products: ShopProduct[];
   categories: { label: string; slug: string; count: number }[];
@@ -43,6 +45,7 @@ export function StorefrontHome({
   hero?: Hero;
   heroAd?: AdView | null;
   studentPercent?: number;
+  bundles?: ReactNode;
 }) {
   return (
     <main className="page-width shop-home">
@@ -92,6 +95,8 @@ export function StorefrontHome({
           </div>
         </section>
       )}
+
+      {bundles}
 
       <section className="shop-section product-section" id="products" aria-labelledby="products-title">
         <div className="shop-section-heading">

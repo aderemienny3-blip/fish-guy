@@ -63,6 +63,7 @@ export default async function OrderPage({ params }: { params: Promise<{ referenc
         </ul>
         <dl className="summary-totals">
           {order.discountKobo > 0 && <div className="summary-discount"><dt>Student discount</dt><dd>-{naira(order.discountKobo)}</dd></div>}
+          {order.bundleDiscountKobo > 0 && <div className="summary-discount"><dt>Bundle deal</dt><dd>-{naira(order.bundleDiscountKobo)}</dd></div>}
           {order.promoDiscountKobo > 0 && <div className="summary-discount"><dt>Festive deal</dt><dd>-{naira(order.promoDiscountKobo)}</dd></div>}
           {order.giftName && <div className="summary-gift"><dt>Free gift</dt><dd>{order.giftName}</dd></div>}
           <div><dt>Delivery ({order.zone.name})</dt><dd>{naira(order.deliveryFeeKobo)}</dd></div>
@@ -77,6 +78,7 @@ export default async function OrderPage({ params }: { params: Promise<{ referenc
       </section>
 
       <div className="student-actions">
+        {order.status === "DELIVERED" && <Link href={`/review/${order.reference}`} className="button button-gold">Rate your order</Link>}
         <Link href="/shop" className="button button-outline">Continue shopping</Link>
         {whatsapp && (
           <a className="button button-gold" target="_blank" rel="noreferrer" href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hello Fish Guy, my order is ${order.reference}.`)}`}>

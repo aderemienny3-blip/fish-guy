@@ -24,7 +24,7 @@ export function localBusinessJsonLd() {
   });
 }
 
-export function productJsonLd(p: { name: string; slug: string; description: string | null; imageUrl: string | null; priceKobo: number; stockQty: number }) {
+export function productJsonLd(p: { name: string; slug: string; description: string | null; imageUrl: string | null; priceKobo: number; stockQty: number }, rating?: { count: number; avg: number }) {
   return compact({
     "@context": "https://schema.org",
     "@type": "Product",
@@ -32,6 +32,7 @@ export function productJsonLd(p: { name: string; slug: string; description: stri
     description: p.description ?? "",
     image: p.imageUrl ?? "",
     brand: { "@type": "Brand", name: BUSINESS.name },
+    aggregateRating: rating && rating.count > 0 ? { "@type": "AggregateRating", ratingValue: rating.avg, reviewCount: rating.count } : "",
     offers: {
       "@type": "Offer",
       url: `${siteUrl()}/shop/${p.slug}`,

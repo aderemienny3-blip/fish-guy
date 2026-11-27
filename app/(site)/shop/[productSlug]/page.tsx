@@ -10,6 +10,9 @@ import { AddOnShelf } from "@/components/shop/addon-shelf";
 import { naira } from "@/lib/shop/format";
 import { JsonLd } from "@/components/seo/json-ld";
 import { productJsonLd } from "@/lib/seo";
+import { ReviewsSection } from "@/components/shop/reviews-section";
+import { WhatsAppLink } from "@/components/shop/whatsapp-chat";
+import { getReviewSummary } from "@/lib/reviews";
 
 export const dynamic = "force-dynamic";
 
@@ -25,12 +28,13 @@ export default async function ProductPage({ params }: Props) {
   const { productSlug } = await params;
   const p = await getProductBySlug(productSlug);
   if (!p) notFound();
+  const rating = await getReviewSummary(p.id);
   const low = stockLabel(p);
   const addOns = p.isAddOn ? [] : await getAddOns();
 
   return (
     <main className="page-width product-page">
-      <JsonLd data={productJsonLd(p)} />
+      <JsonLd data={productJsonLd(p, rating)} />
       <nav className="breadcrumb" aria-label="Breadcrumb">
         <Link href="/shop">Shop</Link>
         {p.category && p.categorySlug && (<><span aria-hidden="true">/</span><Link href={`/shop?category=${p.categorySlug}`}>{p.category}</Link></>)}
@@ -49,6 +53,7 @@ export default async function ProductPage({ params }: Props) {
           {low && <p className={`product-stock ${p.stockQty <= 0 ? "is-out" : ""}`}>{low}</p>}
           <AddToCart product={p} withQuantity />
           {p.cartonKg && p.unit === "kg" && <CartonButton product={p} cartonKg={p.cartonKg} />}
+          <WhatsAppLink text={`Hello Fish Guy, I have a question about ${p.name}.`} label="Ask about this on WhatsApp" />
           <ul className="product-facts">
             <li>Delivered cold across Lagos (except Ikorodu) and selected Ogun campuses</li>
             <li>Choose your day and time slot at checkout</li>
@@ -56,6 +61,7 @@ export default async function ProductPage({ params }: Props) {
           </ul>
         </div>
       </section>
+      <ReviewsSection productId={p.id} />
       <AddOnShelf items={addOns} title="Goes well with this" note="Add ponmo, plantain and more in one tap." />
     </main>
   );

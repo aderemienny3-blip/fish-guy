@@ -56,6 +56,8 @@ model Product {
   updatedAt   DateTime    @updatedAt
   items       OrderItem[]
   regulars    RegularItem[]
+  bundleItems BundleItem[]
+  reviews     Review[]
 
   @@index([active, category])
 }
@@ -114,6 +116,7 @@ model Order {
 
   items    OrderItem[]
   payments Payment[]
+  reviews  Review[]
 
   @@index([status, expiresAt])
   @@index([deliveryDate, slotId])
@@ -121,6 +124,7 @@ model Order {
   @@index([contactPhone])
   discountKobo           Int                  @default(0)
   promoDiscountKobo      Int                  @default(0)
+  bundleDiscountKobo     Int                  @default(0)
   giftName               String?
   studentVerificationId  String?
   studentVerification    StudentVerification? @relation(fields: [studentVerificationId], references: [id])
@@ -408,6 +412,51 @@ model RegularItem {
   product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
 
   @@unique([customerId, productId])
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Bundle {
+  id          String       @id @default(cuid())
+  slug        String       @unique
+  name        String
+  description String?
+  priceKobo   Int
+  active      Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+  items       BundleItem[]
+}
+
+model BundleItem {
+  id        String  @id @default(cuid())
+  bundleId  String
+  productId String
+  quantity  Int
+  bundle    Bundle  @relation(fields: [bundleId], references: [id], onDelete: Cascade)
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@unique([bundleId, productId])
+}
+
+model Review {
+  id          String       @id @default(cuid())
+  productId   String
+  orderId     String
+  rating      Int
+  comment     String?
+  displayName String
+  status      ReviewStatus @default(PENDING)
+  createdAt   DateTime     @default(now())
+  moderatedAt DateTime?
+  product     Product      @relation(fields: [productId], references: [id], onDelete: Cascade)
+  order       Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@unique([orderId, productId])
+  @@index([productId, status])
 }
 
 enum LabelStatus {

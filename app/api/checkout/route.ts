@@ -9,6 +9,7 @@ import { deliveryFeeFor, describeZoneDays, isSlotBookable, zoneAllowsDate } from
 import { discountFor, findUsableVerification, getStudentRules } from "@/lib/student";
 import { loadLivePromo } from "@/lib/festive";
 import { MAX_QTY, cartonsOf, evaluatePromo, resolveDiscounts } from "@/lib/festive-math";
+import { applyBundles } from "@/lib/bundle-math";
 
 const HOLD_MINUTES = 30;
 
@@ -122,9 +123,17 @@ export async function POST(req: Request) {
       const promo = await loadLivePromo(tx);
       const deal = promo ? evaluatePromo(promo, cartonsOf(cartonLines), cartonValue) : null;
 
-      const studentRaw = studentVerificationId ? discountFor(subtotal, studentPercent, studentMax) : 0;
+      // Bundle deals: found from the cart contents and priced from the database. The student discount applies to what is left.
+      const bundleRows = await tx.bundle.findMany({ where: { active: true }, include: { items: true } });
+      const bundleDeal = applyBundles(
+        bundleRows.map((b) => ({ id: b.id, name: b.name, priceKobo: b.priceKobo, items: b.items.map((i) => ({ productId: i.productId, quantity: i.quantity })) })),
+        qtyById,
+        new Map(products.map((p) => [p.id, p.priceKobo])),
+      );
+      const bundleKobo = Math.min(bundleDeal.savingKobo, subtotal);
+      const studentRaw = studentVerificationId ? discountFor(subtotal - bundleKobo, studentPercent, studentMax) : 0;
       const { promoKobo, studentKobo } = resolveDiscounts({
-        subtotalKobo: subtotal,
+        subtotalKobo: subtotal - bundleKobo,
         promoKobo: deal?.discountKobo ?? 0,
         studentKobo: studentRaw,
         stack: promo?.stackWithStudent ?? false,
@@ -151,8 +160,9 @@ export async function POST(req: Request) {
           discountKobo: discount,
           studentVerificationId: discount > 0 ? studentVerificationId : null,
           promoDiscountKobo: promoKobo,
+          bundleDiscountKobo: bundleKobo,
           giftName: deal?.gift ?? null,
-          totalKobo: subtotal - discount - promoKobo + deliveryFee,
+          totalKobo: subtotal - discount - promoKobo - bundleKobo + deliveryFee,
           expiresAt: new Date(Date.now() + HOLD_MINUTES * 60 * 1000),
           items: {
             create: products.map((p) => ({

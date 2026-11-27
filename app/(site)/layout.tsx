@@ -24,6 +24,8 @@ import "./label.css";
 import "./mobile-player.css";
 import "./growth.css";
 import { siteUrl } from "@/lib/seo";
+import "./trust.css";
+import { WhatsAppFloat } from "@/components/shop/whatsapp-chat";
 
 export const metadata: Metadata = {
   title: "Fish Guy | Frozen Food Delivery in Lagos",
@@ -50,6 +52,7 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
             <SiteFooter />
           </div>
           <MiniPlayer />
+          <WhatsAppFloat />
           <FestivePopup />
           <AdPopup />
           <PwaBoot />

@@ -120,7 +120,8 @@ export async function notifyOrderStatus(o: { reference: string; contactName: str
   if (!c) return;
   const wa = o.contactPhone ? sendOrderUpdateWhatsApp(o.contactPhone, o.contactName.split(" ")[0], o.reference, status).catch(() => false) : Promise.resolve(false);
   const link = site() ? `<p style="margin:20px 0 0"><a href="${site()}/order/${o.reference}" style="color:#D4AF37">View order ${o.reference}</a></p>` : "";
-  await Promise.all([wa, sendEmail(o.contactEmail, `${c[0]} · ${o.reference}`, shell(c[0], `<p>Hi ${esc(o.contactName.split(" ")[0])}, ${c[1]}</p>${link}`))]);
+  const rate = status === "DELIVERED" && site() ? `<p style="margin:12px 0 0"><a href="${site()}/review/${o.reference}" style="color:#D4AF37">Rate your order</a></p>` : "";
+  await Promise.all([wa, sendEmail(o.contactEmail, `${c[0]} · ${o.reference}`, shell(c[0], `<p>Hi ${esc(o.contactName.split(" ")[0])}, ${c[1]}</p>${link}${rate}`))]);
 }
 
 export async function notifyStudentDecision(

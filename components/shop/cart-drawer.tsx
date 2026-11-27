@@ -7,6 +7,7 @@ import { naira } from "@/lib/shop/format";
 import { useCart } from "@/components/shop/cart";
 import { PromoProgress } from "@/components/shop/promo-progress";
 import { CartAddOns } from "@/components/shop/addon-shelf";
+import { WhatsAppLink } from "@/components/shop/whatsapp-chat";
 
 export function CartDrawer() {
   const { lines, count, subtotalKobo, isOpen, setOpen, setQty, remove } = useCart();
@@ -72,6 +73,7 @@ export function CartDrawer() {
           <div className="cart-drawer-footer">
             <div className="cart-subtotal"><span>Subtotal</span><strong>{naira(subtotalKobo)}</strong></div>
             <p>Delivery fee and time slot are chosen at checkout.</p>
+            <WhatsAppLink text="Hello Fish Guy, I have a question about my cart." label="Questions? Chat on WhatsApp" />
             {lines.length > 0 ? (
               <Link href="/checkout" className="button button-gold" onClick={() => setOpen(false)}>Continue to checkout</Link>
             ) : (

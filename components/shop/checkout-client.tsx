@@ -8,6 +8,8 @@ import { useCart } from "@/components/shop/cart";
 import { discountFor } from "@/lib/student-math";
 import { MAX_QTY, cartonsOf, evaluatePromo, resolveDiscounts, type PromoRules } from "@/lib/festive-math";
 import { clearSaved, loadSaved, saveDetails, type Prefill } from "@/lib/checkout-saved";
+import { applyBundles, type BundleDef } from "@/lib/bundle-math";
+import { WhatsAppLink } from "@/components/shop/whatsapp-chat";
 
 const STUDENT_KEY = "fish-guy-student-v1";
 
@@ -19,7 +21,7 @@ type Pickup = { id: string; address: string };
 const dayLabel = (iso: string) =>
   new Intl.DateTimeFormat("en-NG", { timeZone: "UTC", weekday: "short", day: "numeric", month: "short" }).format(new Date(iso + "T00:00:00Z"));
 
-export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, promo, prefill }: { prefill?: Prefill | null; zones: Zone[]; slots: Slot[]; today: string; lastDay: string; student: { percent: number; maxKobo: number | null }; pickup: Pickup | null; promo: PromoRules | null }) {
+export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, promo, prefill, bundles }: { bundles?: BundleDef[]; prefill?: Prefill | null; zones: Zone[]; slots: Slot[]; today: string; lastDay: string; student: { percent: number; maxKobo: number | null }; pickup: Pickup | null; promo: PromoRules | null }) {
   const { lines, ready, remove, setQty } = useCart();
   const [live, setLive] = useState<Map<string, Live> | null>(null);
   const [zoneId, setZoneId] = useState(zones.some((z) => z.id === prefill?.zoneId) ? prefill!.zoneId : zones[0]?.id ?? "");
@@ -95,16 +97,18 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
   const effectiveSlot = openSlots.some((s) => s.id === slotId) ? slotId : openSlots[0]?.id ?? "";
 
   const cartonLines = items.map((i) => ({ qty: i.quantity, cartonKg: i.cartonKg }));
+  const bundle = applyBundles(bundles ?? [], new Map(items.map((i) => [i.productId, i.quantity])), new Map(items.map((i) => [i.productId, i.priceKobo])));
+  const bundleKobo = Math.min(bundle.savingKobo, subtotalKobo);
   const deal = promo ? evaluatePromo(promo, cartonsOf(cartonLines), items.reduce((n, i) => n + (i.cartonKg ? i.priceKobo * i.quantity : 0), 0)) : null;
   const { promoKobo, studentKobo } = resolveDiscounts({
-    subtotalKobo,
+    subtotalKobo: subtotalKobo - bundleKobo,
     promoKobo: deal?.discountKobo ?? 0,
-    studentKobo: studentRef ? discountFor(subtotalKobo, student.percent, student.maxKobo) : 0,
+    studentKobo: studentRef ? discountFor(subtotalKobo - bundleKobo, student.percent, student.maxKobo) : 0,
     stack: promo?.stackWithStudent ?? false,
   });
   const discount = studentKobo;
   const fee = isPickup || deal?.freeDelivery ? 0 : zone ? deliveryFeeFor(zone, subtotalKobo) : 0;
-  const total = subtotalKobo - discount - promoKobo + fee;
+  const total = subtotalKobo - discount - promoKobo - bundleKobo + fee;
   const minOrder = !isPickup && zone?.minOrderKobo ? zone.minOrderKobo : 0;
   const belowMin = minOrder > 0 && subtotalKobo < minOrder;
 
@@ -228,6 +232,7 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
         {studentRef && <p className="field-note">Student discount applies only if the phone number above is the one you verified with.</p>}
         <p className="field-note">We send order updates by email and WhatsApp.</p>
         <p className="field-note">You will be taken to Paystack to pay by card, bank transfer or USSD.</p>
+        <WhatsAppLink text="Hello Fish Guy, I need help with my order." label="Need help? Chat on WhatsApp" />
       </form>
 
       <aside className="order-summary" aria-label="Order summary">
@@ -258,6 +263,7 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
         )}
         <dl className="summary-totals">
           <div><dt>Subtotal</dt><dd>{naira(subtotalKobo)}</dd></div>
+          {bundleKobo > 0 && <div className="summary-discount"><dt>Bundle deal ({bundle.applied.map((a) => (a.count > 1 ? `${a.count} × ` : "") + a.name).join(", ")})</dt><dd>-{naira(bundleKobo)}</dd></div>}
           {promoKobo > 0 && <div className="summary-discount"><dt>{promo?.title ?? "Festive deal"}</dt><dd>-{naira(promoKobo)}</dd></div>}
           {discount > 0 && <div className="summary-discount"><dt>Student discount ({student.percent}%)</dt><dd>-{naira(discount)}</dd></div>}
           {deal?.gift && <div className="summary-gift"><dt>Free gift</dt><dd>{deal.gift}</dd></div>}

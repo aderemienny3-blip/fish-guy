@@ -2,6 +2,7 @@ import Link from "next/link";
 import { ProductCard } from "@/components/shop/product-card";
 import { ShopEmptyState } from "@/components/shop/shop-empty-state";
 import { getShopData } from "@/lib/shop/data";
+import { BundleShelf } from "@/components/shop/bundle-shelf";
 
 export const dynamic = "force-dynamic";
 export const metadata = {
@@ -22,6 +23,7 @@ export default async function ShopPage({ searchParams }: { searchParams: Promise
         <div><h1>{selected?.label ?? "Shop frozen food"}</h1><p>Prices are per kg. Delivery across Lagos (except Ikorodu) and selected Ogun campuses.</p></div>
         <Link href="/" className="text-link">Back to home</Link>
       </div>
+      {!selected && <BundleShelf />}
       {(categories.length > 0 || addOns.length > 0) && (
         <nav className="shop-filter-list" aria-label="Product categories">
           <Link href="/shop" aria-current={!selected ? "page" : undefined}>All products</Link>
