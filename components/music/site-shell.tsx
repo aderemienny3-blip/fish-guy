@@ -3,8 +3,12 @@ import Link from 'next/link'
 import { Disc3 } from 'lucide-react'
 import { CartDrawer } from '@/components/shop/cart-drawer'
 import { PlayMusicButton } from '@/components/music/play-music-button'
+import { getSiteFlags } from '@/lib/site-flags'
+import { fmt12 } from '@/lib/admin/format'
 
-export function SiteHeader() {
+export async function SiteHeader() {
+  const flags = await getSiteFlags()
+  const music = flags.music
   return (
     <header className="site-header">
       <Link href="/" className="brand-lockup" aria-label="Fish Guy home">
@@ -15,34 +19,36 @@ export function SiteHeader() {
         <Link href="/shop?category=fish" className="nav-link">Frozen Fish</Link>
         <Link href="/orders" className="nav-link">Orders</Link>
         <Link href="/account" className="nav-link">Account</Link>
-        <Link href="/sounds" className="nav-link">Sounds</Link>
+        {music && <Link href="/sounds" className="nav-link">Sounds</Link>}
       </nav>
       <div className="header-utilities">
-        <span className="store-status"><span className="store-status-dot" aria-hidden="true" />Open 8:30 AM – 9:00 PM</span>
-        <PlayMusicButton variant="header" />
+        <span className="store-status"><span className="store-status-dot" aria-hidden="true" />Open {fmt12(flags.openMinute)} – {fmt12(flags.closeMinute)}</span>
+        {music && <PlayMusicButton variant="header" />}
         <CartDrawer />
       </div>
     </header>
   )
 }
 
-export function SiteFooter() {
+export async function SiteFooter() {
+  const music = (await getSiteFlags()).music
   return (
     <footer className="site-footer">
       <Link href="/" className="footer-brand">FISH GUY</Link>
-      <p>Frozen food for Lagos. Independent sounds for the kitchen.</p>
+      <p>{music ? "Frozen food for Lagos. Independent sounds for the kitchen." : "Frozen food for Lagos."}</p>
       <nav className="footer-links" aria-label="Footer navigation">
         <Link href="/shop">Shop</Link>
-        <Link href="/sounds">Sounds</Link>
-        <Link href="/library">My library</Link>
+        {music && <Link href="/sounds">Sounds</Link>}
+        {music && <Link href="/library">My library</Link>}
         <Link href="/account">My account</Link>
         <Link href="/student">Student discount</Link>
-        <Link href="/advertise">Advertise your music</Link>
-        <Link href="/sounds/apply">Artist application</Link>
-        <Link href="/report-track">Report a copyright issue</Link>
-        <Link href="/artist/login">Artist sign in</Link>
+        {music && <Link href="/advertise">Advertise your music</Link>}
+        {music && <Link href="/sounds/apply">Artist application</Link>}
+        {music && <Link href="/report-track">Report a copyright issue</Link>}
+        {music && <Link href="/artist/login">Artist sign in</Link>}
         <Link href="/business">Order for your business</Link>
-        <Link href="/label/login">Label sign in</Link>
+        <Link href="/bulk">Bulk and event orders</Link>
+        {music && <Link href="/label/login">Label sign in</Link>}
         <Link href="/delivery-refunds">Delivery &amp; refunds</Link>
         <Link href="/terms">Terms</Link>
         <Link href="/privacy">Privacy</Link>

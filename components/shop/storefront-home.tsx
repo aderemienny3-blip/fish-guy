@@ -126,7 +126,7 @@ export function StorefrontHome({
         </ol>
       </section>
 
-      <FreeStreamStrip tracks={freeTracks} />
+      {freeTracks.length > 0 && <FreeStreamStrip tracks={freeTracks} />}
     </main>
   );
 }

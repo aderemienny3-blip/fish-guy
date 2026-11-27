@@ -7,6 +7,7 @@ export type ShopProduct = {
   slug: string;
   name: string;
   description: string | null;
+  sizeGuide: string | null;
   category: string | null;
   categorySlug: string | null;
   imageUrl: string | null;
@@ -26,6 +27,7 @@ const toView = (p: Row, top: Set<string>, stickers: AdView[] = []): ShopProduct 
   slug: p.slug,
   name: p.name,
   description: p.description,
+  sizeGuide: p.sizeGuide,
   category: p.category,
   categorySlug: p.category ? slugifyCategory(p.category) : null,
   imageUrl: p.imageUrl,

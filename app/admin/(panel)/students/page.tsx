@@ -5,6 +5,7 @@ import { fmtDateTime } from "@/lib/admin/format";
 import { formatNaira } from "@/lib/money";
 import { Banner, Empty, PageHeader, Stat, btn, btnDanger, btnGhost, card, input } from "@/components/admin/ui";
 import { getStudentRules } from "@/lib/student";
+import { studentFlags } from "@/lib/student-flags";
 import { approveStudent, rejectStudent, revokeStudent } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -20,6 +21,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
     db.studentVerification.findMany({ where: { OR: [{ status: { in: ["REJECTED", "REVOKED"] } }, { status: "APPROVED", expiresAt: { lte: now } }] }, orderBy: { createdAt: "desc" }, take: 30, include: { institution: true } }),
     db.order.aggregate({ where: { studentVerificationId: { not: null }, status: { in: ["PAID", "PREPARING", "OUT_FOR_DELIVERY", "DELIVERED"] } }, _count: true, _sum: { discountKobo: true } }),
   ]);
+  const flags = await studentFlags(pending);
   const school = (v: { institution: { name: string } | null; otherInstitution: string | null }) => v.institution?.name ?? `${v.otherInstitution} (not on list)`;
 
   return (
@@ -56,6 +58,7 @@ export default async function StudentsPage({ searchParams }: { searchParams: Pro
                 <p className="text-sm">{school(v)}</p>
                 <p className="text-sm text-[#9A9585]">Matric: {v.matricNumber} · {v.phone} · {v.email}</p>
                 <p className="text-xs text-[#9A9585]">Applied {fmtDateTime(v.createdAt)}</p>
+                {(flags.get(v.id) ?? []).map((f) => <p key={f} className="mt-1 text-xs text-orange-300">Check: {f}</p>)}
                 <div className="mt-4 flex flex-wrap items-start gap-3">
                   <form action={approveStudent}><input type="hidden" name="id" value={v.id} /><button className={btn}>Approve</button></form>
                   <form action={rejectStudent} className="flex flex-wrap gap-2">

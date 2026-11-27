@@ -53,6 +53,7 @@ model Product {
   active      Boolean     @default(true)
   isAddOn     Boolean     @default(false) // ponmo, plantain and other extras
   costKobo    Int? // what one unit costs you, kobo. Empty = not set
+  sizeGuide   String? // what a customer gets per kg or pack, shown on the product page
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   items       OrderItem[]
@@ -237,6 +238,7 @@ model StoreSettings {
   heroImageUrl           String?
   heroCaption            String?
   heroAlt                String?
+  musicEnabled           Boolean  @default(true)
 }
 // ---- FISH GUY FESTIVE CARTON DEALS ----
 
@@ -514,6 +516,23 @@ model AdSpend {
   createdAt  DateTime @default(now())
 
   @@index([day, source])
+}
+
+model BulkQuote {
+  id        String   @id @default(cuid())
+  name      String
+  phone     String
+  business  String?
+  items     String
+  area      String?
+  neededBy  String?
+  status    String   @default("NEW")
+  note      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status, createdAt])
+  @@index([phone, createdAt])
 }
 
 model FunnelEvent {

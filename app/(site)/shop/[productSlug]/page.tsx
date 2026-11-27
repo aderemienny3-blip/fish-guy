@@ -39,7 +39,7 @@ export default async function ProductPage({ params }: Props) {
       <PixelEvent event="ViewContent" data={{ content_ids: [p.id], content_name: p.name, content_type: "product", value: p.priceKobo / 100, currency: "NGN" }} />
       <nav className="breadcrumb" aria-label="Breadcrumb">
         <Link href="/shop">Shop</Link>
-        {p.category && p.categorySlug && (<><span aria-hidden="true">/</span><Link href={`/shop?category=${p.categorySlug}`}>{p.category}</Link></>)}
+        {p.category && p.categorySlug && (<><span aria-hidden="true">/</span><Link href={`/category/${p.categorySlug}`}>{p.category}</Link></>)}
         <span aria-hidden="true">/</span><span>{p.name}</span>
       </nav>
       <section className="product-detail">
@@ -52,6 +52,7 @@ export default async function ProductPage({ params }: Props) {
           <h1>{p.name}</h1>
           <p className="product-detail-price">{naira(p.priceKobo)} <span>per {p.unit}</span></p>
           {p.description && <p className="product-detail-description">{p.description}</p>}
+          {p.sizeGuide && <p className="product-detail-description product-size-guide"><strong>Size guide:</strong> {p.sizeGuide}</p>}
           {low && <p className={`product-stock ${p.stockQty <= 0 ? "is-out" : ""}`}>{low}</p>}
           <AddToCart product={p} withQuantity />
           {p.cartonKg && p.unit === "kg" && <CartonButton product={p} cartonKg={p.cartonKg} />}

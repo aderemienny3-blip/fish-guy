@@ -1,9 +1,17 @@
 import { LegalPage, Section } from "@/components/legal/legal-page";
 import { BUSINESS, hasContact } from "@/lib/business";
+import { db } from "@/lib/db";
+import { getSiteFlags } from "@/lib/site-flags";
+import { fmt12 } from "@/lib/admin/format";
+import { formatNaira } from "@/lib/money";
 
 export const metadata = { title: "Contact | Fish Guy" };
 
-export default function ContactPage() {
+export const dynamic = "force-dynamic";
+
+export default async function ContactPage() {
+  const flags = await getSiteFlags();
+  const zones = await db.deliveryZone.findMany({ where: { active: true, isPickup: false }, orderBy: { name: "asc" }, select: { id: true, name: true, feeKobo: true, freeOverKobo: true } }).catch(() => []);
   const wa = BUSINESS.whatsapp.replace(/\D/g, "");
   return (
     <LegalPage eyebrow="CONTACT" title="Talk to Fish Guy" intro="Questions about an order, a delivery or a product? Reach us here. Have your order number ready if you have one.">
@@ -20,8 +28,15 @@ export default function ContactPage() {
         )}
       </Section>
       <Section title="Opening hours">
-        <p>Every day, 8:30 AM to 9:00 PM (Lagos time).</p>
+        <p>Every day, {fmt12(flags.openMinute)} to {fmt12(flags.closeMinute)} (Lagos time).</p>
       </Section>
+      {zones.length > 0 && (
+        <Section title="Where we deliver">
+          <ul className="legal-list">
+            {zones.map((z) => <li key={z.id}>{z.name}: {formatNaira(z.feeKobo)}{z.freeOverKobo ? `, free over ${formatNaira(z.freeOverKobo)}` : ""}</li>)}
+          </ul>
+        </Section>
+      )}
       {(BUSINESS.legalName || BUSINESS.address || BUSINESS.cacNumber) && (
         <Section title="Who we are">
           <p>
