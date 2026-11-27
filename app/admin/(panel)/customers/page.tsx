@@ -4,6 +4,8 @@ import { getSettings } from "@/lib/admin/settings";
 import { SEGMENTS, SEGMENT_LABEL, getCustomers, type Segment } from "@/lib/admin/segments";
 import { daysSince } from "@/lib/admin/format";
 import { formatNaira } from "@/lib/money";
+import { db } from "@/lib/db";
+import { PAID_STATUSES } from "@/lib/admin/orders";
 import { Empty, PageHeader, SegmentBadge, btn, btnGhost, card, input, td, th } from "@/components/admin/ui";
 
 export default async function CustomersPage({
@@ -40,6 +42,22 @@ export default async function CustomersPage({
     return str ? `/admin/customers?${str}` : "/admin/customers";
   };
   const exportHref = seg ? `/admin/customers/export?segment=${seg}` : "/admin/customers/export";
+
+  const shown = rows.map((c) => c.phone);
+  const [consents, history] = await Promise.all([
+    db.messagingConsent.findMany({ where: { phone: { in: shown } }, select: { phone: true, marketing: true } }),
+    db.order.findMany({ where: { contactPhone: { in: shown }, status: { in: PAID_STATUSES } }, orderBy: { createdAt: "desc" }, take: 4000, select: { contactPhone: true, zone: { select: { name: true } }, items: { select: { nameSnapshot: true, quantity: true } } } }),
+  ]);
+  const optedIn = new Map(consents.map((c) => [c.phone, c.marketing]));
+  const area = new Map<string, string>();
+  const bought = new Map<string, Map<string, number>>();
+  for (const o of history) {
+    if (!area.has(o.contactPhone)) area.set(o.contactPhone, o.zone.name);
+    const m = bought.get(o.contactPhone) ?? new Map<string, number>();
+    for (const i of o.items) m.set(i.nameSnapshot, (m.get(i.nameSnapshot) ?? 0) + i.quantity);
+    bought.set(o.contactPhone, m);
+  }
+  const usually = (phone: string) => [...(bought.get(phone) ?? [])].sort((a, b) => b[1] - a[1]).slice(0, 2).map(([n]) => n).join(", ");
 
   return (
     <>
@@ -88,7 +106,7 @@ export default async function CustomersPage({
         <Empty title="No customers match" hint="Try another segment or search." />
       ) : (
         <div className={`${card} overflow-x-auto`}>
-          <table className="w-full min-w-[820px]">
+          <table className="w-full min-w-[1100px]">
             <thead className="border-b border-white/10">
               <tr>
                 <th className={th}>Customer</th>
@@ -96,6 +114,9 @@ export default async function CustomersPage({
                 <th className={`${th} text-right`}>Orders</th>
                 <th className={`${th} text-right`}>Total spend</th>
                 <th className={`${th} text-right`}>Average</th>
+                <th className={th}>Area</th>
+                <th className={th}>Usually buys</th>
+                <th className={th}>Offers</th>
                 <th className={`${th} text-right`}>Last order</th>
               </tr>
             </thead>
@@ -114,6 +135,9 @@ export default async function CustomersPage({
                     <td className={`${td} text-right`}>{c.orders}</td>
                     <td className={`${td} text-right`}>{formatNaira(c.spendKobo)}</td>
                     <td className={`${td} text-right`}>{formatNaira(Math.round(c.spendKobo / c.orders))}</td>
+                    <td className={td}>{area.get(c.phone) ?? "-"}</td>
+                    <td className={`${td} text-xs`}>{usually(c.phone) || "-"}</td>
+                    <td className={td}>{optedIn.get(c.phone) ? <span className="text-[#D4AF37]">Agreed</span> : optedIn.get(c.phone) === false ? <span className="text-red-300">Stopped</span> : <span className="text-[#9A9585]">No</span>}</td>
                     <td className={`${td} text-right text-[#9A9585]`}>{ago === 0 ? "Today" : `${ago}d ago`}</td>
                   </tr>
                 );

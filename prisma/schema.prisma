@@ -125,6 +125,18 @@ model Order {
   discountKobo           Int                  @default(0)
   promoDiscountKobo      Int                  @default(0)
   bundleDiscountKobo     Int                  @default(0)
+  utmSource              String?
+  utmMedium              String?
+  utmCampaign            String?
+  utmContent             String?
+  refCode                String?
+  trackingConsent        Boolean              @default(false)
+  fbp                    String?
+  fbc                    String?
+  trackUa                String?
+  trackIp                String?
+  reminder1At            DateTime?
+  reminder2At            DateTime?
   giftName               String?
   studentVerificationId  String?
   studentVerification    StudentVerification? @relation(fields: [studentVerificationId], references: [id])
@@ -155,6 +167,7 @@ model Payment {
   status      PaymentStatus @default(INITIATED)
   method      String?
   raw         Json?
+  checkoutUrl String?
   createdAt   DateTime      @default(now())
   updatedAt   DateTime      @updatedAt
 
@@ -275,10 +288,17 @@ model Artist {
   labelId    String?
   verifiedAt DateTime?
   label      Label?   @relation(fields: [labelId], references: [id], onDelete: SetNull)
+  bankName      String?
+  accountNumber String?
+  accountName   String?
+  splits        TrackSplit[]
+  earnings      Earning[]
+  payouts       Payout[]
 }
 
 model Track {
   id              String           @id @default(cuid())
+  splits          TrackSplit[]
   isrc            String?          @unique
   artistId        String
   slug            String           @unique
@@ -351,6 +371,9 @@ model MusicOrder {
   shareWithArtist  Boolean          @default(false)
   refundedAt       DateTime?
   refundNote       String?
+  utmSource        String?
+  utmCampaign      String?
+  refCode          String?
   items            MusicOrderItem[]
 
   @@index([buyerSessionHash, status])
@@ -367,6 +390,7 @@ model MusicOrderItem {
   track         Track               @relation(fields: [trackId], references: [id], onDelete: Restrict)
   editionNo     Int?
   downloadsFrom DateTime?
+  earnings Earning[]
   downloadLinks MusicDownloadLink[]
 
   @@index([orderId])
@@ -414,6 +438,64 @@ model RegularItem {
   @@unique([customerId, productId])
 }
 
+model MessagingConsent {
+  phone         String    @id
+  marketing     Boolean   @default(false)
+  source        String    @default("checkout")
+  consentedAt   DateTime  @default(now())
+  optedOutAt    DateTime?
+  lastReorderAt DateTime?
+  updatedAt     DateTime  @updatedAt
+}
+
+model MessageLog {
+  id        String   @id @default(cuid())
+  channel   String
+  to        String
+  kind      String
+  ref       String?
+  ok        Boolean
+  error     String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([kind, createdAt])
+}
+
+model FunnelEvent {
+  id        String   @id @default(cuid())
+  sid       String
+  type      String
+  day       String
+  source    String
+  campaign  String?
+  ref       String?
+  createdAt DateTime @default(now())
+
+  @@unique([sid, type, day])
+  @@index([day, source])
+  @@index([ref])
+}
+
+model TrackedLink {
+  id          String   @id @default(cuid())
+  code        String   @unique
+  label       String
+  kind        String
+  destination String
+  artistId    String?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+model LinkClick {
+  id        String   @id @default(cuid())
+  code      String
+  createdAt DateTime @default(now())
+
+  @@index([code, createdAt])
+}
+
 enum ReviewStatus {
   PENDING
   APPROVED
@@ -457,6 +539,61 @@ model Review {
 
   @@unique([orderId, productId])
   @@index([productId, status])
+}
+
+model PayoutSetting {
+  id             String   @id @default("default")
+  artistBps      Int
+  minPayoutKobo  Int      @default(500000)
+  updatedAt      DateTime @updatedAt
+}
+
+model TrackSplit {
+  id        String   @id @default(cuid())
+  trackId   String
+  artistId  String
+  bps       Int
+  role      String   @default("Collaborator")
+  createdAt DateTime @default(now())
+  track     Track    @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  artist    Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+
+  @@unique([trackId, artistId])
+  @@index([artistId])
+}
+
+model Payout {
+  id            String    @id @default(cuid())
+  artistId      String
+  amountKobo    Int
+  status        String    @default("REQUESTED")
+  bankName      String
+  accountNumber String
+  accountName   String
+  requestedAt   DateTime  @default(now())
+  paidAt        DateTime?
+  transferRef   String?
+  note          String?
+  artist        Artist    @relation(fields: [artistId], references: [id], onDelete: Restrict)
+  earnings      Earning[]
+
+  @@index([artistId])
+  @@index([status])
+}
+
+model Earning {
+  id          String          @id @default(cuid())
+  orderItemId String
+  artistId    String
+  amountKobo  Int
+  payoutId    String?
+  createdAt   DateTime        @default(now())
+  orderItem   MusicOrderItem  @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+  artist      Artist          @relation(fields: [artistId], references: [id], onDelete: Restrict)
+  payout      Payout?         @relation(fields: [payoutId], references: [id], onDelete: SetNull)
+
+  @@unique([orderItemId, artistId])
+  @@index([artistId, payoutId])
 }
 
 enum LabelStatus {

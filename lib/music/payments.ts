@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { fetchPaystackAsTxn } from "@/lib/paystack";
 import { assignEditionNumbers } from "@/lib/music/sales";
+import { recordEarnings } from "@/lib/music/earnings";
 
 export const MUSIC_REF = /^FGS-[A-F0-9]{32}$/;
 
@@ -14,6 +15,7 @@ export async function confirmMusicOrder(reference: string): Promise<boolean> {
   if (!order) return false;
   if (order.status === "PAID") {
     await assignEditionNumbers(order.id).catch((e) => console.error("edition numbering failed (again)", e));
+    await recordEarnings(order.id).catch((e) => console.error("earnings failed (again)", e));
     return true;
   }
   if (!order.providerRef) return false;
@@ -30,6 +32,7 @@ export async function confirmMusicOrder(reference: string): Promise<boolean> {
   const fresh = await db.musicOrder.findUnique({ where: { id: order.id }, select: { status: true } });
   if (fresh?.status === "PAID") {
     await assignEditionNumbers(order.id).catch((e) => console.error("edition numbering failed", e));
+    await recordEarnings(order.id).catch((e) => console.error("earnings failed", e));
     return true;
   }
   return false;

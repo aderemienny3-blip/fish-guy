@@ -1,5 +1,6 @@
 import { formatNaira } from "@/lib/money";
 import { normalizeNgPhone } from "@/lib/phone";
+import { logMessage } from "@/lib/message-log";
 
 // WhatsApp Business Cloud API (Meta). Used for (1) instant new-order alerts to you, and (2) login codes for customers.
 // Needs WHATSAPP_TOKEN and WHATSAPP_PHONE_ID on Vercel. Never throws: a failed message must never break an order.
@@ -16,7 +17,15 @@ const clean = (s: string) => s.replace(/[\r\n\t]+/g, " ").replace(/ {4,}/g, "   
 
 export type SendResult = { to: string; ok: boolean; error?: string };
 
-async function sendTemplate(to: string, name: string, bodyParams: string[], buttonParam?: string): Promise<SendResult> {
+/** Sends a template message and records it in the message log. */
+export async function sendTemplateMessage(to: string, name: string, bodyParams: string[], buttonParam?: string, ref?: string): Promise<SendResult> {
+  const r = await sendTemplateRaw(to, name, bodyParams, buttonParam);
+  await logMessage({ channel: "WHATSAPP", to, kind: name, ok: r.ok, error: r.error, ref: ref ?? null });
+  return r;
+}
+const sendTemplate = sendTemplateMessage;
+
+async function sendTemplateRaw(to: string, name: string, bodyParams: string[], buttonParam?: string): Promise<SendResult> {
   try {
     const components: object[] = [{ type: "body", parameters: bodyParams.map((t) => ({ type: "text", text: clean(t) })) }];
     if (buttonParam) components.push({ type: "button", sub_type: "url", index: "0", parameters: [{ type: "text", text: buttonParam }] });

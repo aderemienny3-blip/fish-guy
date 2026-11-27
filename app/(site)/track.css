@@ -1,0 +1,4 @@
+.consent-banner{position:fixed;left:12px;right:12px;bottom:12px;z-index:60;display:flex;gap:14px;align-items:center;justify-content:space-between;flex-wrap:wrap;max-width:720px;margin:0 auto;padding:14px 16px;border:1px solid #D4AF37;border-radius:12px;background:#0A0A0A;color:#F5F1E6;box-shadow:0 6px 24px rgba(0,0,0,.6)}
+.consent-banner p{margin:0;flex:1 1 260px;font-size:14px}
+.consent-banner a{color:#D4AF37}
+.consent-banner div{display:flex;gap:8px}

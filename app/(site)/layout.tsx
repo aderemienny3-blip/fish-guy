@@ -25,6 +25,11 @@ import "./mobile-player.css";
 import "./growth.css";
 import { siteUrl } from "@/lib/seo";
 import "./trust.css";
+import "./track.css";
+import "./messages.css";
+import { SourceCapture } from "@/components/track/source-capture";
+import { MetaPixel } from "@/components/track/meta-pixel";
+import { ConsentBanner } from "@/components/track/consent-banner";
 import { WhatsAppFloat } from "@/components/shop/whatsapp-chat";
 
 export const metadata: Metadata = {
@@ -56,6 +61,9 @@ export default function SiteLayout({ children }: { children: React.ReactNode }) 
           <FestivePopup />
           <AdPopup />
           <PwaBoot />
+          <SourceCapture />
+          <MetaPixel />
+          <ConsentBanner />
         </MusicPlayerProvider>
       </CartProvider>
     </div>

@@ -10,6 +10,7 @@ import { MAX_QTY, cartonsOf, evaluatePromo, resolveDiscounts, type PromoRules } 
 import { clearSaved, loadSaved, saveDetails, type Prefill } from "@/lib/checkout-saved";
 import { applyBundles, type BundleDef } from "@/lib/bundle-math";
 import { WhatsAppLink } from "@/components/shop/whatsapp-chat";
+import { CheckoutStarted } from "@/components/track/checkout-started";
 
 const STUDENT_KEY = "fish-guy-student-v1";
 
@@ -34,6 +35,12 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
   const isPickup = mode === "pickup" && !!pickup;
   const [pre, setPre] = useState<Prefill | null>(prefill ?? null);
   const [fromDevice, setFromDevice] = useState(false);
+
+  // The area picked in the cart carries over to checkout.
+  useEffect(() => {
+    if (prefill?.zoneId) return;
+    try { const z = window.localStorage.getItem("fish-guy-zone-v1"); if (z && zones.some((x) => x.id === z)) setZoneId(z); } catch { /* ignore */ }
+  }, [prefill, zones]);
 
   // Signed-in customers get their details from the server. Guests get what this device saved last time.
   useEffect(() => {
@@ -145,6 +152,7 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
           slotId: effectiveSlot,
           deliveryDate: effectiveDate,
           studentRef: studentRef ?? undefined,
+          marketingConsent: f.get("marketing") === "on",
         }),
       });
       const json = await res.json().catch(() => ({}));
@@ -164,6 +172,7 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
 
   return (
     <div className="checkout-layout">
+      <CheckoutStarted valueKobo={subtotalKobo} ids={items.map((i) => i.productId)} />
       <form key={pre ? "saved" : "blank"} className="checkout-shell" onSubmit={onSubmit}>
         <fieldset>
           <legend>Contact</legend>
@@ -230,7 +239,8 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
           {busy ? "Starting payment…" : `Pay ${naira(total)} securely`}
         </button>
         {studentRef && <p className="field-note">Student discount applies only if the phone number above is the one you verified with.</p>}
-        <p className="field-note">We send order updates by email and WhatsApp.</p>
+        <label className="consent-row"><input type="checkbox" name="marketing" /><span>Send me offers and reorder reminders on WhatsApp and email. Optional. You can stop any time.</span></label>
+        <p className="field-note">We always send updates about your order by email and WhatsApp.</p>
         <p className="field-note">You will be taken to Paystack to pay by card, bank transfer or USSD.</p>
         <WhatsAppLink text="Hello Fish Guy, I need help with my order." label="Need help? Chat on WhatsApp" />
       </form>

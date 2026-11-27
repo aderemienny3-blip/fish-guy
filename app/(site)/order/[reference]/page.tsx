@@ -4,6 +4,8 @@ import { db } from "@/lib/db";
 import { settleOrder } from "@/lib/payments";
 import { naira } from "@/lib/shop/format";
 import { ClearCart } from "@/components/shop/clear-cart";
+import { PurchaseEvent } from "@/components/track/pixel-event";
+import { PaymentCountdown } from "@/components/shop/payment-countdown";
 
 export const dynamic = "force-dynamic";
 
@@ -27,7 +29,7 @@ export default async function OrderPage({ params }: { params: Promise<{ referenc
   // Covers the customer returning from Paystack before the webhook arrives.
   try { await settleOrder(reference); } catch { /* show current state; the webhook will catch up */ }
 
-  const order = await db.order.findUnique({ where: { reference }, include: { items: true, zone: true, slot: true } });
+  const order = await db.order.findUnique({ where: { reference }, include: { items: true, zone: true, slot: true, payments: { orderBy: { createdAt: "desc" }, take: 1 } } });
   if (!order) notFound();
   const whatsapp = (process.env.NEXT_PUBLIC_WHATSAPP ?? "").replace(/\D/g, "");
   const stepIndex = STEPS.indexOf(order.status as (typeof STEPS)[number]);
@@ -36,11 +38,12 @@ export default async function OrderPage({ params }: { params: Promise<{ referenc
   return (
     <main className="page-width utility-page order-page">
       {PAID_STATES.has(order.status) && <ClearCart />}
+      {PAID_STATES.has(order.status) && <PurchaseEvent reference={order.reference} valueKobo={order.totalKobo} items={order.items.map((i) => ({ id: i.productId, quantity: i.quantity, priceKobo: i.unitPriceKobo }))} />}
       <p className="eyebrow">ORDER {order.reference}</p>
       <h1>{LABEL[order.status] ?? order.status}</h1>
 
       {order.status === "PENDING_PAYMENT" && (
-        <p className="utility-intro">We have not received your payment yet. If you already paid, this page updates within a minute. Refresh to check again.</p>
+        <PaymentCountdown expiresAt={order.expiresAt ? order.expiresAt.toISOString() : null} payUrl={order.payments[0]?.checkoutUrl ?? null} />
       )}
       {(order.status === "EXPIRED" || order.status === "CANCELLED") && (
         <p className="utility-intro">This order was not paid in time. Your items were released, so you can place the order again from the shop.</p>

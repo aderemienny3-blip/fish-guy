@@ -1,5 +1,6 @@
 import { formatNaira } from "@/lib/money";
 import { sendOrderUpdateWhatsApp } from "@/lib/whatsapp";
+import { logMessage } from "@/lib/message-log";
 
 /**
  * Email through Resend's HTTP API. Never throws: a failed email must never break an order.
@@ -13,6 +14,7 @@ export async function sendEmail(to: string | string[], subject: string, html: st
   const list = (Array.isArray(to) ? to : [to]).map((t) => t.trim()).filter(Boolean);
   if (!key || list.length === 0) {
     console.warn("email skipped (no RESEND_API_KEY or recipient):", subject);
+    if (list.length > 0) await logMessage({ channel: "EMAIL", to: list.join(", "), kind: subject, ok: false, error: "Email is not set up" });
     return false;
   }
   try {
@@ -23,9 +25,11 @@ export async function sendEmail(to: string | string[], subject: string, html: st
       signal: AbortSignal.timeout(6000),
     });
     if (!res.ok) console.error("email failed", res.status, await res.text().catch(() => ""));
+    await logMessage({ channel: "EMAIL", to: list.join(", "), kind: subject, ok: res.ok, error: res.ok ? null : `HTTP ${res.status}` });
     return res.ok;
   } catch (e) {
     console.error("email error", e);
+    await logMessage({ channel: "EMAIL", to: list.join(", "), kind: subject, ok: false, error: "request failed" });
     return false;
   }
 }

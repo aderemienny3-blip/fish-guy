@@ -1,5 +1,7 @@
 "use client";
 
+import { trackAddToCart } from "@/lib/track-client";
+
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
 export type CartLine = {
@@ -63,6 +65,7 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [lines, ready]);
 
   const add = useCallback((line: Omit<CartLine, "qty">, qty = 1) => {
+    trackAddToCart(line, qty);
     setLines((prev) => {
       const existing = prev.find((l) => l.productId === line.productId);
       if (existing) {

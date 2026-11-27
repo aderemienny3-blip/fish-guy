@@ -13,6 +13,7 @@ import { productJsonLd } from "@/lib/seo";
 import { ReviewsSection } from "@/components/shop/reviews-section";
 import { WhatsAppLink } from "@/components/shop/whatsapp-chat";
 import { getReviewSummary } from "@/lib/reviews";
+import { PixelEvent } from "@/components/track/pixel-event";
 
 export const dynamic = "force-dynamic";
 
@@ -35,6 +36,7 @@ export default async function ProductPage({ params }: Props) {
   return (
     <main className="page-width product-page">
       <JsonLd data={productJsonLd(p, rating)} />
+      <PixelEvent event="ViewContent" data={{ content_ids: [p.id], content_name: p.name, content_type: "product", value: p.priceKobo / 100, currency: "NGN" }} />
       <nav className="breadcrumb" aria-label="Breadcrumb">
         <Link href="/shop">Shop</Link>
         {p.category && p.categorySlug && (<><span aria-hidden="true">/</span><Link href={`/shop?category=${p.categorySlug}`}>{p.category}</Link></>)}

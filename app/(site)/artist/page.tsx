@@ -8,6 +8,8 @@ import { MAX_PER_WEEK, recipientsFor } from "@/lib/announce";
 import { share } from "@/lib/artist-math";
 import { formatNaira } from "@/lib/money";
 import { RosterOverview } from "@/components/artist/roster-overview";
+import { Earnings } from "@/components/artist/earnings";
+import { ArtistLinkCard } from "@/components/artist/link-card";
 import { artistLogout } from "./actions";
 import { submitAnnouncement } from "./announce-actions";
 
@@ -45,7 +47,7 @@ function Places({ rows, total, empty }: { rows: { label: string; value: number }
   );
 }
 
-export default async function ArtistDashboard({ searchParams }: { searchParams: Promise<{ a?: string; announced?: string; error?: string }> }) {
+export default async function ArtistDashboard({ searchParams }: { searchParams: Promise<{ a?: string; announced?: string; error?: string; esaved?: string; eerror?: string }> }) {
   const access = await getArtistAccess();
   if (!access) redirect((await getLabelAccess()) ? "/label" : "/artist/login");
   const { email, artists } = access;
@@ -77,6 +79,7 @@ export default async function ArtistDashboard({ searchParams }: { searchParams: 
     );
   }
   const artist = artists.find((x) => x.id === q.a) ?? artists[0];
+  const bank = await db.artist.findUnique({ where: { id: artist.id }, select: { bankName: true, accountNumber: true, accountName: true } });
   const [s, announcements, allFans, superfans] = await Promise.all([
     artistStats(artist.id),
     db.fanAnnouncement.findMany({ where: { artistId: artist.id }, orderBy: { createdAt: "desc" }, take: 8 }),
@@ -214,6 +217,10 @@ export default async function ArtistDashboard({ searchParams }: { searchParams: 
           </div>
         )}
       </section>
+
+      <ArtistLinkCard artist={{ id: artist.id, slug: artist.slug, name: artist.name }} />
+
+      <Earnings artist={{ id: artist.id, bankName: bank?.bankName ?? null, accountNumber: bank?.accountNumber ?? null, accountName: bank?.accountName ?? null }} canRequest={access.via === "artist"} saved={q.esaved} error={q.eerror} />
 
       <section className="ad-block">
         <h2>Recent buyers</h2>

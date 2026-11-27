@@ -19,7 +19,7 @@ export default async function SaleSettings({ params, searchParams }: { params: P
 
   return (
     <>
-      <PageHeader title={`Sale settings: ${t.title}`} subtitle={`${t.artist.name}. Set how this track is sold.`} actions={<Link href="/admin/music" className={btnGhost}>Back to music</Link>} />
+      <PageHeader title={`Sale settings: ${t.title}`} subtitle={`${t.artist.name}. Set how this track is sold.`} actions={<><Link href={`/admin/music/tracks/${t.id}/splits`} className={btnGhost}>Split sheet</Link> <Link href="/admin/music" className={btnGhost}>Back to music</Link></>} />
       {saved && <Banner kind="ok">Saved.</Banner>}
       {error && <Banner>{error}</Banner>}
       <form action={saveSale} className={`${card} max-w-2xl space-y-5 p-6`}>

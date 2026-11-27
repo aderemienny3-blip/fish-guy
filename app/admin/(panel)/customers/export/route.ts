@@ -1,4 +1,5 @@
 import { getAdmin } from "@/lib/admin/auth";
+import { db } from "@/lib/db";
 import { getSettings } from "@/lib/admin/settings";
 import { SEGMENTS, SEGMENT_LABEL, getCustomers, type Segment } from "@/lib/admin/segments";
 
@@ -20,7 +21,8 @@ export async function GET(req: Request) {
 
   const customers = (await getCustomers(await getSettings())).filter((c) => !seg || c.segment === seg);
 
-  const header = ["Name", "Phone", "Email", "Segment", "Paid orders", "Total spend (NGN)", "First order", "Last order"];
+  const consented = new Set((await db.messagingConsent.findMany({ where: { marketing: true }, select: { phone: true } })).map((x) => x.phone));
+  const header = ["Name", "Phone", "Email", "Segment", "Paid orders", "Total spend (NGN)", "First order", "Last order", "Agreed to offers"];
   const lines = [header.map(cell).join(",")];
   for (const c of customers) {
     lines.push(
@@ -33,6 +35,7 @@ export async function GET(req: Request) {
         (c.spendKobo / 100).toFixed(2),
         c.firstAt.toISOString().slice(0, 10),
         c.lastAt.toISOString().slice(0, 10),
+        consented.has(c.phone) ? "Yes" : "No",
       ]
         .map(cell)
         .join(",")

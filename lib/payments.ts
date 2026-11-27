@@ -1,6 +1,7 @@
 import { db } from "@/lib/db";
 import { fetchPaystackAsTxn } from "@/lib/paystack";
 import { notifyNeedsRefund, notifyOrderPaid } from "@/lib/notify";
+import { sendPurchaseEvent } from "@/lib/meta-capi";
 import { alertOwner, orderAlertText, refundAlertText } from "@/lib/whatsapp";
 
 /**
@@ -75,6 +76,7 @@ export async function settleOrder(reference: string) {
         if (full) {
           await alertOwner(orderAlertText(full));
           await notifyOrderPaid(full);
+          await sendPurchaseEvent(full);
         }
       }
     } catch (e) {

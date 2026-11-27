@@ -8,6 +8,7 @@ import { useCart } from "@/components/shop/cart";
 import { PromoProgress } from "@/components/shop/promo-progress";
 import { CartAddOns } from "@/components/shop/addon-shelf";
 import { WhatsAppLink } from "@/components/shop/whatsapp-chat";
+import { DeliveryEstimate } from "@/components/shop/delivery-estimate";
 
 export function CartDrawer() {
   const { lines, count, subtotalKobo, isOpen, setOpen, setQty, remove } = useCart();
@@ -69,6 +70,8 @@ export function CartDrawer() {
           {lines.length > 0 && <CartAddOns />}
 
           {lines.length > 0 && <PromoProgress />}
+
+          {lines.length > 0 && <DeliveryEstimate />}
 
           <div className="cart-drawer-footer">
             <div className="cart-subtotal"><span>Subtotal</span><strong>{naira(subtotalKobo)}</strong></div>

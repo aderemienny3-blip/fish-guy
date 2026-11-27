@@ -10,6 +10,7 @@ import { discountFor, findUsableVerification, getStudentRules } from "@/lib/stud
 import { loadLivePromo } from "@/lib/festive";
 import { MAX_QTY, cartonsOf, evaluatePromo, resolveDiscounts } from "@/lib/festive-math";
 import { applyBundles } from "@/lib/bundle-math";
+import { orderAttribution } from "@/lib/attribution";
 
 const HOLD_MINUTES = 30;
 
@@ -25,6 +26,7 @@ const Body = z.object({
   slotId: z.string(),
   deliveryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   studentRef: z.string().optional(),
+  marketingConsent: z.boolean().optional(),
 });
 
 class CheckoutError extends Error {}
@@ -35,6 +37,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Please check your details and try again." }, { status: 400 });
   }
   const b = parsed.data;
+  const attribution = orderAttribution(req.headers);
   const phone = normalizeNgPhone(b.phone);
   if (!phone) return NextResponse.json({ error: "Enter a valid Nigerian phone number." }, { status: 400 });
 
@@ -161,6 +164,7 @@ export async function POST(req: Request) {
           studentVerificationId: discount > 0 ? studentVerificationId : null,
           promoDiscountKobo: promoKobo,
           bundleDiscountKobo: bundleKobo,
+          ...attribution,
           giftName: deal?.gift ?? null,
           totalKobo: subtotal - discount - promoKobo - bundleKobo + deliveryFee,
           expiresAt: new Date(Date.now() + HOLD_MINUTES * 60 * 1000),
@@ -191,8 +195,16 @@ export async function POST(req: Request) {
         provider: "paystack",
         providerRef: init.reference,
         amountKobo: order.totalKobo,
+        checkoutUrl: init.authorizationUrl,
       },
     });
+
+    // Offers and reminders only if the customer ticked the box. Order messages do not need it.
+    if (b.marketingConsent) {
+      await db.messagingConsent
+        .upsert({ where: { phone: order.contactPhone }, update: { marketing: true, source: "checkout", consentedAt: new Date(), optedOutAt: null }, create: { phone: order.contactPhone, marketing: true, source: "checkout" } })
+        .catch((e) => console.error("consent not saved", e));
+    }
 
     return NextResponse.json({ checkoutUrl: init.authorizationUrl, reference: order.reference });
   } catch (e) {

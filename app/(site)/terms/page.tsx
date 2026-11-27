@@ -24,6 +24,9 @@ export default function Terms() {
       <Section title="Music">
         <p>Tracks are provided by independent artists, who confirm that they own the rights to what they upload. Buying a track gives you a personal licence to listen and download it for your own use. You may not copy, resell or share it publicly. We may remove a track after a rights complaint.</p>
       </Section>
+      <Section title="Messages">
+        <p>When you order, you agree that we send you messages about that order by WhatsApp and email. Offers and reorder reminders are sent only if you agree to them at checkout, and you can stop them at any time.</p>
+      </Section>
       <Section title="Using the site">
         <p>Do not misuse the site, try to break into it, or place orders with false details. We may cancel and refund orders that look fraudulent.</p>
       </Section>

@@ -1,3 +1,4 @@
+import { musicAttribution } from "@/lib/attribution";
 import { randomUUID } from "node:crypto";
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
@@ -58,6 +59,7 @@ export async function POST(request: Request) {
         amountKobo: chargeKobo,
         idempotencyKey,
         ...geoFrom(request.headers),
+        ...musicAttribution(request.headers),
         shareWithArtist: body?.shareWithArtist === true,
         items: { create: { trackId: track.id, unitPriceKobo: chargeKobo } },
       },
