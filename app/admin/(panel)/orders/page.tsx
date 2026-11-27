@@ -21,14 +21,16 @@ const TABS: { status?: OrderStatus; label: string }[] = [
 export default async function OrdersPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; date?: string; q?: string }>;
+  searchParams: Promise<{ status?: string; date?: string; q?: string; rider?: string; zone?: string }>;
 }) {
   await requireAdmin();
-  const { status, date, q } = await searchParams;
+  const { status, date, q, zone, rider } = await searchParams;
 
   const where: Prisma.OrderWhereInput = {};
   if (status && status in STATUS_LABEL) where.status = status as OrderStatus;
   if (date && /^\d{4}-\d{2}-\d{2}$/.test(date)) where.deliveryDate = date;
+  if (zone) where.zoneId = zone;
+  if (rider) where.riderId = rider === "none" ? null : rider;
   if (q?.trim()) {
     const term = q.trim();
     const digits = term.replace(/\D/g, "");
@@ -43,12 +45,17 @@ export default async function OrdersPage({
     where,
     orderBy: { createdAt: "desc" },
     take: 100,
-    include: { zone: true, slot: true, items: { select: { quantity: true } } },
+    include: { zone: true, slot: true, rider: { select: { name: true } }, items: { select: { quantity: true } } },
   });
+
+  const [zones, riders] = await Promise.all([
+    db.deliveryZone.findMany({ where: { active: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+    db.adminUser.findMany({ where: { role: "RIDER", active: true }, orderBy: { name: "asc" }, select: { id: true, name: true } }),
+  ]);
 
   const keep = (extra: Record<string, string | undefined>) => {
     const p = new URLSearchParams();
-    const merged = { status, date, q, ...extra };
+    const merged = { status, date, q, zone, rider, ...extra };
     for (const [k, v] of Object.entries(merged)) if (v) p.set(k, v);
     const s = p.toString();
     return s ? `/admin/orders?${s}` : "/admin/orders";
@@ -83,14 +90,16 @@ export default async function OrdersPage({
         {status && <input type="hidden" name="status" value={status} />}
         <input name="q" defaultValue={q} placeholder="Search reference, name or phone" className={`${input} max-w-xs`} />
         <input name="date" type="date" defaultValue={date} className={`${input} max-w-[11rem]`} title="Delivery date" />
+        <select name="zone" defaultValue={zone ?? ""} className={`${input} max-w-[11rem]`} title="Area"><option value="">All areas</option>{zones.map((z) => <option key={z.id} value={z.id}>{z.name}</option>)}</select>
+        <select name="rider" defaultValue={rider ?? ""} className={`${input} max-w-[11rem]`} title="Rider"><option value="">All riders</option><option value="none">No rider yet</option>{riders.map((r) => <option key={r.id} value={r.id}>{r.name}</option>)}</select>
         <button type="submit" className={btn}>Filter</button>
-        {(q || date) && <Link href={keep({ q: undefined, date: undefined })} className={btnGhost}>Clear</Link>}
+        {(q || date || zone || rider) && <Link href={keep({ q: undefined, date: undefined, zone: undefined, rider: undefined })} className={btnGhost}>Clear</Link>}
       </form>
 
       {orders.length === 0 ? (
         <Empty
           title="No orders found"
-          hint={status || q || date ? "Try clearing the filters." : "Orders will appear here as soon as customers check out."}
+          hint={status || q || date || zone || rider ? "Try clearing the filters." : "Orders will appear here as soon as customers check out."}
         />
       ) : (
         <div className={`${card} overflow-x-auto`}>
@@ -102,6 +111,7 @@ export default async function OrdersPage({
                 <th className={th}>Delivery</th>
                 <th className={th}>Total</th>
                 <th className={th}>Status</th>
+                <th className={th}>Rider</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-white/5">
@@ -125,6 +135,7 @@ export default async function OrdersPage({
                   </td>
                   <td className={td}>{formatNaira(o.totalKobo)}</td>
                   <td className={td}><StatusBadge status={o.status} /></td>
+                  <td className={`${td} text-sm text-[#9A9585]`}>{o.rider?.name ?? "-"}</td>
                 </tr>
               ))}
             </tbody>

@@ -6,6 +6,7 @@ import { MANAGERS, requireAdmin } from "@/lib/admin/auth";
 import { CANCELLABLE, NEXT_STATUS, canAdvance } from "@/lib/admin/orders";
 import { bail, str } from "@/lib/admin/format";
 import { notifyOrderStatus } from "@/lib/notify";
+import { audit } from "@/lib/audit";
 
 export async function advanceOrder(fd: FormData) {
   const admin = await requireAdmin();
@@ -19,13 +20,16 @@ export async function advanceOrder(fd: FormData) {
   if (!to || !canAdvance(admin.role, order.status)) bail(back, "You can't move this order forward.");
 
   // Guarded update: does nothing if someone else already moved it.
-  const r = await db.order.updateMany({ where: { id: order.id, status: order.status }, data: { status: to } });
-  if (r.count > 0) await notifyOrderStatus(order, to);
+  const r = await db.order.updateMany({ where: { id: order.id, status: order.status }, data: to === "DELIVERED" ? { status: to, deliveredAt: new Date() } : { status: to } });
+  if (r.count > 0) {
+    await notifyOrderStatus(order, to);
+    await audit(admin, `Moved to ${to}`, reference);
+  }
   redirect(back);
 }
 
 export async function cancelOrder(fd: FormData) {
-  await requireAdmin(MANAGERS);
+  const admin = await requireAdmin(MANAGERS);
   const reference = str(fd, "reference");
   const back = `/admin/orders/${reference}`;
 
@@ -48,5 +52,6 @@ export async function cancelOrder(fd: FormData) {
       });
     }
   });
+  await audit(admin, "Cancelled order", reference, order.status);
   redirect(back);
 }

@@ -9,6 +9,7 @@ import PrintButton from "@/components/admin/PrintButton";
 import { waLink, waMessages, suggestedKeys } from "@/lib/admin/whatsapp";
 import { Banner, PageHeader, StatusBadge, btn, btnDanger, btnGhost, card, td, th } from "@/components/admin/ui";
 import { advanceOrder, cancelOrder } from "../actions";
+import OrderOps from "@/components/admin/OrderOps";
 
 export default async function OrderDetail({
   params,
@@ -56,7 +57,7 @@ export default async function OrderDetail({
 
       <div className="mb-6 flex flex-wrap items-center gap-3 print:hidden">
         <StatusBadge status={order.status} />
-        {advance && (
+        {advance && order.status !== "OUT_FOR_DELIVERY" && (
           <form action={advanceOrder}>
             <input type="hidden" name="reference" value={order.reference} />
             <button type="submit" className={btn}>{ADVANCE_LABEL[order.status]}</button>
@@ -142,6 +143,8 @@ export default async function OrderDetail({
               </div>
             </section>
           )}
+
+          <OrderOps reference={order.reference} role={admin.role} adminId={admin.id} />
 
           <section className={`${card} p-5 print:hidden`}>
             <h2 className="mb-3 font-serif text-xl">Payment</h2>

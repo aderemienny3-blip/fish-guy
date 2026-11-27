@@ -52,6 +52,7 @@ model Product {
   cartonKg    Int? // kg in one carton (10 chicken, 20 fish). Empty = not sold by the carton
   active      Boolean     @default(true)
   isAddOn     Boolean     @default(false) // ponmo, plantain and other extras
+  costKobo    Int? // what one unit costs you, kobo. Empty = not set
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
   items       OrderItem[]
@@ -137,6 +138,13 @@ model Order {
   trackIp                String?
   reminder1At            DateTime?
   reminder2At            DateTime?
+  riderId                String?
+  rider                  AdminUser?           @relation("OrderRider", fields: [riderId], references: [id])
+  deliveredAt            DateTime?
+  deliveryPhotoPath      String?
+  coldChainOk            Boolean?
+  deliveryNote           String?
+  complaints             Complaint[]
   giftName               String?
   studentVerificationId  String?
   studentVerification    StudentVerification? @relation(fields: [studentVerificationId], references: [id])
@@ -206,6 +214,7 @@ model AdminUser {
   lockedUntil  DateTime?
   lastLoginAt  DateTime?
   createdAt    DateTime  @default(now())
+  deliveries   Order[]   @relation("OrderRider")
 }
 
 // Single row (id = 1). Hours are minutes from midnight, Lagos time.
@@ -460,6 +469,51 @@ model MessageLog {
 
   @@index([createdAt])
   @@index([kind, createdAt])
+}
+
+enum ComplaintStatus {
+  OPEN
+  RESOLVED
+}
+
+model Complaint {
+  id             String          @id @default(cuid())
+  orderId        String
+  order          Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  kind           String
+  message        String
+  status         ComplaintStatus @default(OPEN)
+  resolution     String?
+  resolutionNote String?
+  resolvedAt     DateTime?
+  resolvedBy     String?
+  createdAt      DateTime        @default(now())
+
+  @@index([status, createdAt])
+  @@index([orderId])
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  adminId   String?
+  adminName String
+  action    String
+  target    String
+  detail    String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+model AdSpend {
+  id         String   @id @default(cuid())
+  day        String // YYYY-MM-DD, Lagos date
+  source     String
+  amountKobo Int
+  note       String?
+  createdAt  DateTime @default(now())
+
+  @@index([day, source])
 }
 
 model FunnelEvent {

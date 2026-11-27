@@ -82,6 +82,7 @@ export default async function OrderPage({ params }: { params: Promise<{ referenc
 
       <div className="student-actions">
         {order.status === "DELIVERED" && <Link href={`/review/${order.reference}`} className="button button-gold">Rate your order</Link>}
+        {order.status === "DELIVERED" && <Link href={`/problem/${order.reference}`} className="text-link">Report a problem</Link>}
         <Link href="/shop" className="button button-outline">Continue shopping</Link>
         {whatsapp && (
           <a className="button button-gold" target="_blank" rel="noreferrer" href={`https://wa.me/${whatsapp}?text=${encodeURIComponent(`Hello Fish Guy, my order is ${order.reference}.`)}`}>
