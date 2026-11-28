@@ -67,6 +67,8 @@ export default async function OrderPage({ params }: { params: Promise<{ referenc
         <dl className="summary-totals">
           {order.discountKobo > 0 && <div className="summary-discount"><dt>Student discount</dt><dd>-{naira(order.discountKobo)}</dd></div>}
           {order.bundleDiscountKobo > 0 && <div className="summary-discount"><dt>Bundle deal</dt><dd>-{naira(order.bundleDiscountKobo)}</dd></div>}
+          {order.referralDiscountKobo > 0 && <div className="summary-discount"><dt>Referral discount</dt><dd>-{naira(order.referralDiscountKobo)}</dd></div>}
+          {order.creditUsedKobo > 0 && <div className="summary-discount"><dt>Fish Guy credit used</dt><dd>-{naira(order.creditUsedKobo)}</dd></div>}
           {order.promoDiscountKobo > 0 && <div className="summary-discount"><dt>Festive deal</dt><dd>-{naira(order.promoDiscountKobo)}</dd></div>}
           {order.giftName && <div className="summary-gift"><dt>Free gift</dt><dd>{order.giftName}</dd></div>}
           <div><dt>Delivery ({order.zone.name})</dt><dd>{naira(order.deliveryFeeKobo)}</dd></div>

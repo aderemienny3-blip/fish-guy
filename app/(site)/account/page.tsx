@@ -3,6 +3,7 @@ import { db } from "@/lib/db";
 import { getCustomer } from "@/lib/customer";
 import { naira } from "@/lib/shop/format";
 import { ReorderButton, type ReorderLine } from "./reorder-button";
+import { ReferralCard } from "@/components/account/referral-card";
 import { googleSignIn, logout, saveName, sendCode, verifyCode } from "./actions";
 
 export const dynamic = "force-dynamic";
@@ -73,6 +74,8 @@ export default async function AccountPage({ searchParams }: { searchParams: Prom
         <label>Your name<input name="name" defaultValue={customer.name ?? ""} maxLength={80} autoComplete="name" /></label>
         <button className="button button-outline" type="submit">Save</button>
       </form>
+
+      <ReferralCard customerId={customer.id} />
 
       <h2 className="account-h2">Past orders</h2>
       {orders.length === 0 ? (

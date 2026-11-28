@@ -11,6 +11,7 @@ import { clearSaved, loadSaved, saveDetails, type Prefill } from "@/lib/checkout
 import { applyBundles, type BundleDef } from "@/lib/bundle-math";
 import { WhatsAppLink } from "@/components/shop/whatsapp-chat";
 import { CheckoutStarted } from "@/components/track/checkout-started";
+import { ReferralBox } from "@/components/shop/referral-box";
 
 const STUDENT_KEY = "fish-guy-student-v1";
 
@@ -153,6 +154,8 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
           deliveryDate: effectiveDate,
           studentRef: studentRef ?? undefined,
           marketingConsent: f.get("marketing") === "on",
+          referralCode: String(f.get("referralCode") ?? "").trim() || undefined,
+          useCredit: f.get("useCredit") === "on",
         }),
       });
       const json = await res.json().catch(() => ({}));
@@ -239,6 +242,7 @@ export function CheckoutClient({ zones, slots, today, lastDay, student, pickup, 
           {busy ? "Starting payment…" : `Pay ${naira(total)} securely`}
         </button>
         {studentRef && <p className="field-note">Student discount applies only if the phone number above is the one you verified with.</p>}
+        <ReferralBox />
         <label className="consent-row"><input type="checkbox" name="marketing" /><span>Send me offers and reorder reminders on WhatsApp and email. Optional. You can stop any time.</span></label>
         <p className="field-note">We always send updates about your order by email and WhatsApp.</p>
         <p className="field-note">You will be taken to Paystack to pay by card, bank transfer or USSD.</p>

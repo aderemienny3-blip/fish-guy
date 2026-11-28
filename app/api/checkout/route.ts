@@ -11,6 +11,9 @@ import { loadLivePromo } from "@/lib/festive";
 import { MAX_QTY, cartonsOf, evaluatePromo, resolveDiscounts } from "@/lib/festive-math";
 import { applyBundles } from "@/lib/bundle-math";
 import { orderAttribution } from "@/lib/attribution";
+import { PAID_STATUSES } from "@/lib/admin/orders";
+import { applyReferralAndCredit, referralEligibility } from "@/lib/referral-math";
+import { creditBalance, findCode, getReferralSettings } from "@/lib/referrals";
 
 const HOLD_MINUTES = 30;
 
@@ -27,6 +30,8 @@ const Body = z.object({
   deliveryDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   studentRef: z.string().optional(),
   marketingConsent: z.boolean().optional(),
+  referralCode: z.string().trim().max(20).optional(),
+  useCredit: z.boolean().optional(),
 });
 
 class CheckoutError extends Error {}
@@ -145,7 +150,29 @@ export async function POST(req: Request) {
       // Store pickup is always free. Otherwise the free-delivery threshold is judged on the food total before discounts.
       const deliveryFee = zone.isPickup || deal?.freeDelivery ? 0 : deliveryFeeFor(zone, subtotal);
 
-      return tx.order.create({
+      // Referral code and credit: checked and priced here, from the database, never from the browser.
+      const foodAfterDiscounts = subtotal - discount - promoKobo - bundleKobo;
+      let referral: { code: string; ownerId: string; rewardKobo: number } | null = null;
+      let referralCfg = 0;
+      if (b.referralCode) {
+        const [found, rs] = await Promise.all([findCode(b.referralCode, tx), getReferralSettings(tx)]);
+        if (!found) throw new CheckoutError("We could not find that referral code. Check it or remove it to continue.");
+        const prior = await tx.order.count({ where: { status: { in: PAID_STATUSES }, OR: [{ contactPhone: phone }, { contactEmail: { equals: b.email, mode: "insensitive" } }] } });
+        const ok = referralEligibility({ enabled: rs.enabled, ownerId: found.owner.id, ownerPhone: found.owner.phone, ownerEmail: found.owner.email, buyerId: customerId, buyerPhone: phone, buyerEmail: b.email, priorPaidOrders: prior, baseKobo: foodAfterDiscounts, minOrderKobo: rs.minOrderKobo });
+        if (!ok.ok) throw new CheckoutError(ok.reason);
+        referral = { code: found.code, ownerId: found.owner.id, rewardKobo: rs.rewardKobo };
+        referralCfg = rs.discountKobo;
+      }
+      let creditAvailable = 0;
+      if (b.useCredit && customerId) {
+        // Lock the customer row so two orders at once cannot spend the same credit.
+        await tx.$queryRaw`SELECT "id" FROM "Customer" WHERE "id" = ${customerId} FOR UPDATE`;
+        creditAvailable = Math.max(0, await creditBalance(tx, customerId));
+      }
+      const money = applyReferralAndCredit({ baseKobo: foodAfterDiscounts, deliveryKobo: deliveryFee, referralCfgKobo: referralCfg, creditAvailableKobo: creditAvailable, useCredit: !!b.useCredit && !!customerId });
+      const referralUsed = referral && money.referralKobo > 0 ? referral : null;
+
+      const created = await tx.order.create({
         data: {
           reference,
           customerId,
@@ -164,9 +191,14 @@ export async function POST(req: Request) {
           studentVerificationId: discount > 0 ? studentVerificationId : null,
           promoDiscountKobo: promoKobo,
           bundleDiscountKobo: bundleKobo,
+          referralCode: referralUsed?.code ?? null,
+          referrerId: referralUsed?.ownerId ?? null,
+          referralDiscountKobo: money.referralKobo,
+          referralRewardKobo: referralUsed?.rewardKobo ?? 0,
+          creditUsedKobo: money.creditKobo,
           ...attribution,
           giftName: deal?.gift ?? null,
-          totalKobo: subtotal - discount - promoKobo - bundleKobo + deliveryFee,
+          totalKobo: money.totalKobo,
           expiresAt: new Date(Date.now() + HOLD_MINUTES * 60 * 1000),
           items: {
             create: products.map((p) => ({
@@ -178,6 +210,10 @@ export async function POST(req: Request) {
           },
         },
       });
+      if (money.creditKobo > 0 && customerId) {
+        await tx.creditEntry.create({ data: { customerId, amountKobo: -money.creditKobo, kind: "SPENT", orderId: created.id, note: `Order ${created.reference}` } });
+      }
+      return created;
     });
 
     const site = process.env.NEXT_PUBLIC_SITE_URL!;

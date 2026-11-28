@@ -7,6 +7,7 @@ import { canAdvance } from "@/lib/admin/orders";
 import { bail, str } from "@/lib/admin/format";
 import { notifyOrderStatus } from "@/lib/notify";
 import { audit } from "@/lib/audit";
+import { grantReferralReward } from "@/lib/referrals";
 
 /** Managers choose which rider takes an order. */
 export async function assignRider(fd: FormData) {
@@ -56,6 +57,7 @@ export async function confirmDelivery(fd: FormData) {
   });
   if (r.count > 0) {
     await notifyOrderStatus(order, "DELIVERED");
+    await grantReferralReward(order.id);
     await audit(admin, "Marked delivered", reference, `${coldChainOk ? "cold chain ok" : "cold chain NOT confirmed"}${photoPath ? ", photo" : ""}${note ? `, ${note}` : ""}`);
   }
   redirect(back);

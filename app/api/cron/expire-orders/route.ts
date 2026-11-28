@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
+import { releaseCredit } from "@/lib/referrals";
 
 // Call every 5-10 minutes (Vercel Cron or any scheduler) with:
 //   Authorization: Bearer $CRON_SECRET
@@ -24,6 +25,7 @@ export async function GET(req: Request) {
         data: { status: "EXPIRED" },
       });
       if (r.count === 0) return;
+      await releaseCredit(tx, order.id);
       for (const it of order.items) {
         await tx.product.update({
           where: { id: it.productId },

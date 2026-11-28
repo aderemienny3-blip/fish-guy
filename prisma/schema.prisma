@@ -36,6 +36,8 @@ model Customer {
   createdAt DateTime @default(now())
   orders    Order[]
   regulars  RegularItem[]
+  referralCode  ReferralCode?
+  creditEntries CreditEntry[]
 }
 
 model Product {
@@ -146,6 +148,11 @@ model Order {
   coldChainOk            Boolean?
   deliveryNote           String?
   complaints             Complaint[]
+  referralCode           String?
+  referrerId             String?
+  referralDiscountKobo   Int                  @default(0)
+  referralRewardKobo     Int                  @default(0)
+  creditUsedKobo         Int                  @default(0)
   giftName               String?
   studentVerificationId  String?
   studentVerification    StudentVerification? @relation(fields: [studentVerificationId], references: [id])
@@ -235,6 +242,10 @@ model StoreSettings {
   studentDiscountPercent Int      @default(0) // 0 = student discount is off
   studentDiscountMaxKobo Int? // optional cap per order, in kobo
   studentValidityDays    Int      @default(365)
+  referralEnabled        Boolean  @default(false)
+  referralDiscountKobo   Int      @default(0)
+  referralRewardKobo     Int      @default(0)
+  referralMinOrderKobo   Int      @default(0)
   heroImageUrl           String?
   heroCaption            String?
   heroAlt                String?
@@ -533,6 +544,29 @@ model BulkQuote {
 
   @@index([status, createdAt])
   @@index([phone, createdAt])
+}
+
+model ReferralCode {
+  id         String   @id @default(cuid())
+  customerId String   @unique
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  code       String   @unique
+  createdAt  DateTime @default(now())
+}
+
+// Credit wallet. The balance is the sum of amountKobo. SPENT and RELEASED are tied to an order, once each.
+model CreditEntry {
+  id         String   @id @default(cuid())
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  amountKobo Int // positive adds credit, negative uses it
+  kind       String // REFERRAL_REWARD, SPENT, RELEASED, MANUAL
+  orderId    String?
+  note       String?
+  createdAt  DateTime @default(now())
+
+  @@unique([orderId, kind])
+  @@index([customerId, createdAt])
 }
 
 model FunnelEvent {

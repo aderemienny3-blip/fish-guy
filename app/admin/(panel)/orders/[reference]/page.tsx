@@ -103,6 +103,8 @@ export default async function OrderDetail({
             <div className="flex justify-between"><dt className="text-[#9A9585]">Subtotal</dt><dd>{formatNaira(order.subtotalKobo)}</dd></div>
             {order.discountKobo > 0 && <div className="flex justify-between"><dt className="text-[#9A9585]">Student discount</dt><dd>-{formatNaira(order.discountKobo)}</dd></div>}
             {order.promoDiscountKobo > 0 && <div className="flex justify-between"><dt className="text-[#9A9585]">Festive deal</dt><dd>-{formatNaira(order.promoDiscountKobo)}</dd></div>}
+            {order.referralDiscountKobo > 0 && <div className="flex justify-between"><dt className="text-[#9A9585]">Referral discount ({order.referralCode})</dt><dd>-{formatNaira(order.referralDiscountKobo)}</dd></div>}
+            {order.creditUsedKobo > 0 && <div className="flex justify-between"><dt className="text-[#9A9585]">Credit used</dt><dd>-{formatNaira(order.creditUsedKobo)}</dd></div>}
             {order.giftName && <div className="flex justify-between font-semibold text-[#D4AF37]"><dt>PACK A GIFT</dt><dd>{order.giftName}</dd></div>}
             <div className="flex justify-between"><dt className="text-[#9A9585]">Delivery ({order.zone.name})</dt><dd>{formatNaira(order.deliveryFeeKobo)}</dd></div>
             <div className="flex justify-between text-base font-semibold"><dt>Total</dt><dd className="text-[#D4AF37]">{formatNaira(order.totalKobo)}</dd></div>

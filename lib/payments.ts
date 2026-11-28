@@ -2,6 +2,7 @@ import { db } from "@/lib/db";
 import { fetchPaystackAsTxn } from "@/lib/paystack";
 import { notifyNeedsRefund, notifyOrderPaid } from "@/lib/notify";
 import { sendPurchaseEvent } from "@/lib/meta-capi";
+import { reapplyCredit } from "@/lib/referrals";
 import { alertOwner, orderAlertText, refundAlertText } from "@/lib/whatsapp";
 
 /**
@@ -63,6 +64,7 @@ export async function settleOrder(reference: string) {
       }
     }
 
+    if (order.creditUsedKobo > 0) await reapplyCredit(tx, order.id);
     return { order: await tx.order.update({ where: { id: order.id }, data: { status: "PAID", paidAt: new Date() } }), fresh: true };
   });
 

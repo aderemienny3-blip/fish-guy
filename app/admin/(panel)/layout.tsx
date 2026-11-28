@@ -27,6 +27,7 @@ const NAV: { href: string; label: string; roles: AdminRole[]; exact?: boolean }[
   { href: "/admin/broadcast", label: "WhatsApp offers", roles: MGR },
   { href: "/admin/bundles", label: "Bundles", roles: MGR },
   { href: "/admin/reviews", label: "Reviews", roles: MGR },
+  { href: "/admin/referrals", label: "Referrals and credit", roles: MGR },
   { href: "/admin/rider", label: "Rider deliveries", roles: ["OWNER", "MANAGER", "RIDER"] },
   { href: "/admin/complaints", label: "Complaints", roles: MGR },
   { href: "/admin/abandoned", label: "Unpaid orders", roles: MGR },

@@ -7,6 +7,7 @@ import { CANCELLABLE, NEXT_STATUS, canAdvance } from "@/lib/admin/orders";
 import { bail, str } from "@/lib/admin/format";
 import { notifyOrderStatus } from "@/lib/notify";
 import { audit } from "@/lib/audit";
+import { grantReferralReward, releaseCredit } from "@/lib/referrals";
 
 export async function advanceOrder(fd: FormData) {
   const admin = await requireAdmin();
@@ -24,6 +25,7 @@ export async function advanceOrder(fd: FormData) {
   if (r.count > 0) {
     await notifyOrderStatus(order, to);
     await audit(admin, `Moved to ${to}`, reference);
+    if (to === "DELIVERED") await grantReferralReward(order.id);
   }
   redirect(back);
 }
@@ -43,6 +45,7 @@ export async function cancelOrder(fd: FormData) {
       data: { status: "CANCELLED" },
     });
     if (r.count === 0) return;
+    await releaseCredit(tx, order.id);
     // Put the held stock back on the shelf.
     const items = await tx.orderItem.findMany({ where: { orderId: order.id } });
     for (const it of items) {
